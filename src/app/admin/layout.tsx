@@ -1,14 +1,8 @@
 import type { ReactNode } from "react";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarInset, SidebarHeader } from "@/components/ui/sidebar";
 import { SidebarNav } from "@/components/dashboard/sidebar-nav";
-import { LayoutDashboard, Settings, QrCode } from "lucide-react";
 import Header from "@/components/dashboard/header";
 import Logo from "@/components/logo";
-
-const adminNavItems = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/campaigns", label: "Campaigns", icon: QrCode },
-];
 
 const adminUser = {
   name: "Admin User",
@@ -25,7 +19,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <Logo />
           </SidebarHeader>
           <SidebarContent>
-            <SidebarNav navItems={adminNavItems} />
+            <SidebarNav role="admin" />
           </SidebarContent>
         </Sidebar>
         <SidebarInset className="flex flex-col">

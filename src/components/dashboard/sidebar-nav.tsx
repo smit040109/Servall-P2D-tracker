@@ -3,7 +3,7 @@
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { LucideIcon } from "lucide-react";
+import { type LucideIcon, LayoutDashboard, QrCode } from "lucide-react";
 
 type NavItem = {
   href: string;
@@ -11,13 +11,24 @@ type NavItem = {
   icon: LucideIcon;
 };
 
+const navItemsByRole: Record<string, NavItem[]> = {
+  admin: [
+    { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/admin/campaigns", label: "Campaigns", icon: QrCode },
+  ],
+  branch: [
+    { href: "/branch", label: "Dashboard", icon: LayoutDashboard },
+  ]
+}
+
 type SidebarNavProps = {
-  navItems: NavItem[];
+  role: 'admin' | 'branch';
   className?: string;
 };
 
-export function SidebarNav({ navItems, className }: SidebarNavProps) {
+export function SidebarNav({ role, className }: SidebarNavProps) {
   const pathname = usePathname();
+  const navItems = navItemsByRole[role] || [];
 
   return (
     <SidebarMenu className={className}>

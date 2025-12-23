@@ -1,13 +1,8 @@
 import type { ReactNode } from "react";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarInset, SidebarHeader } from "@/components/ui/sidebar";
 import { SidebarNav } from "@/components/dashboard/sidebar-nav";
-import { LayoutDashboard, Search } from "lucide-react";
 import Header from "@/components/dashboard/header";
 import Logo from "@/components/logo";
-
-const branchNavItems = [
-  { href: "/branch", label: "Dashboard", icon: LayoutDashboard },
-];
 
 const branchUser = {
   name: "Branch User",
@@ -24,7 +19,7 @@ export default function BranchLayout({ children }: { children: ReactNode }) {
             <Logo />
           </SidebarHeader>
           <SidebarContent>
-            <SidebarNav navItems={branchNavItems} />
+            <SidebarNav role="branch" />
           </SidebarContent>
         </Sidebar>
         <SidebarInset className="flex flex-col">
