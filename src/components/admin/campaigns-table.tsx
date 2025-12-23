@@ -40,9 +40,11 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
   }
 
   const getQrCodeUrl = (campaignUrl: string) => {
-    // In a real app, you'd want to get the full URL.
-    // For this prototype, we'll assume it's relative to the deployed site.
-    const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://yourapp.com';
+    // In a real app, this should be an absolute URL. For prototyping,
+    // we'll use the current window location if available.
+    const siteUrl = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : 'https://your-app-domain.com'; // Fallback for server rendering
     const fullUrl = `${siteUrl}${campaignUrl}`;
     return `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(fullUrl)}&size=256x256&bgcolor=ffffff`;
   }
