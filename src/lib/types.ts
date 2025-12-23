@@ -6,6 +6,7 @@ export type Campaign = {
   scans: number;
   leads: number;
   encashed: number;
+  discountId: string;
 };
 
 export type Lead = {
@@ -36,3 +37,12 @@ export type AnalyticsData = {
     encashed: number;
   }[];
 }
+
+export type Discount = {
+    id: string;
+    code: string;
+    description: string;
+    type: 'percentage' | 'fixed';
+    value: number;
+    status: 'active' | 'inactive';
+};

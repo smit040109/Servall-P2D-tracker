@@ -1,9 +1,15 @@
-import type { Campaign, Lead, Franchise, AnalyticsData } from './types';
+import type { Campaign, Lead, Franchise, AnalyticsData, Discount } from './types';
+
+const discounts: Discount[] = [
+  { id: 'disc_1', code: 'DIWALI20', description: '20% off on all services', type: 'percentage', value: 20, status: 'active' },
+  { id: 'disc_2', code: 'MONSOON500', description: '₹500 flat off on bills above ₹2000', type: 'fixed', value: 500, status: 'active' },
+  { id: 'disc_3', code: 'NEWYEAR15', description: '15% off on ceramic coating', type: 'percentage', value: 15, status: 'inactive' },
+];
 
 const campaigns: Campaign[] = [
-  { id: 'cam_1', name: 'Diwali Dhamaka', branch: 'Koramangala', qrCodeUrl: '/campaign/cam_1', scans: 1250, leads: 800, encashed: 450 },
-  { id: 'cam_2', name: 'Monsoon Offer', branch: 'Indiranagar', qrCodeUrl: '/campaign/cam_2', scans: 980, leads: 620, encashed: 310 },
-  { id: 'cam_3', name: 'New Year Special', branch: 'HSR Layout', qrCodeUrl: '/campaign/cam_3', scans: 1500, leads: 1100, encashed: 700 },
+  { id: 'cam_1', name: 'Diwali Dhamaka', branch: 'Koramangala', qrCodeUrl: '/campaign/cam_1', scans: 1250, leads: 800, encashed: 450, discountId: 'disc_1' },
+  { id: 'cam_2', name: 'Monsoon Offer', branch: 'Indiranagar', qrCodeUrl: '/campaign/cam_2', scans: 980, leads: 620, encashed: 310, discountId: 'disc_2' },
+  { id: 'cam_3', name: 'New Year Special', branch: 'HSR Layout', qrCodeUrl: '/campaign/cam_3', scans: 1500, leads: 1100, encashed: 700, discountId: 'disc_3' },
 ];
 
 const leads: Lead[] = [
@@ -64,4 +70,14 @@ export async function getBranchAnalytics(branchId: string): Promise<AnalyticsDat
         successfullyEncashed: franchise.successfullyEncashed,
         leadsOverTime: analyticsData.leadsOverTime.map(d => ({...d, leads: Math.floor(d.leads/3), encashed: Math.floor(d.encashed/3)})) // mock scaled data
     };
+}
+
+export async function getFranchises(): Promise<Franchise[]> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return franchises;
+}
+
+export async function getDiscounts(): Promise<Discount[]> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return discounts;
 }
