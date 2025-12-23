@@ -27,7 +27,6 @@ const formSchema = z.object({
 
 // This page will be available at /campaign/[campaignId]
 export default function CampaignLeadCapturePage({ params }: { params: { campaignId: string } }) {
-  const { campaignId } = params;
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -43,7 +42,7 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     // In a real app, you'd associate this lead with the campaignId
-    console.log({ ...values, campaignId: campaignId });
+    console.log({ ...values, campaignId: params.campaignId });
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     setIsSubmitting(false);
