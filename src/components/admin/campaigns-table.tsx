@@ -18,11 +18,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { QrCode, PlusCircle, Loader2 } from "lucide-react"
+import { QrCode, PlusCircle, Loader2, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import type { Campaign } from "@/lib/types"
 
@@ -37,6 +48,12 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
     setIsCreating(false);
     setOpen(false);
     // In a real app, you would revalidate the data here.
+  }
+  
+  async function handleRemoveCampaign(campaignId: string) {
+    console.log("Removing campaign:", campaignId);
+    // In a real app, you would make an API call and revalidate data.
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
   const getQrCodeUrl = (campaignUrl: string) => {
@@ -105,7 +122,7 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
               <TableHead className="text-right">Scans</TableHead>
               <TableHead className="text-right">Leads</TableHead>
               <TableHead className="text-right">Encashed</TableHead>
-              <TableHead className="text-center">Action</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -117,27 +134,51 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
                 <TableCell className="text-right">{campaign.leads.toLocaleString()}</TableCell>
                 <TableCell className="text-right">{campaign.encashed.toLocaleString()}</TableCell>
                 <TableCell className="text-center">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="icon">
-                        <QrCode className="h-4 w-4" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>{campaign.name} - QR Code</DialogTitle>
-                      </DialogHeader>
-                      <div className="p-4 flex items-center justify-center bg-white rounded-md">
-                         <Image 
-                           src={getQrCodeUrl(campaign.qrCodeUrl)}
-                           width={256}
-                           height={256}
-                           alt={`QR Code for ${campaign.name}`}
-                         />
-                      </div>
-                      <p className="text-center text-sm text-muted-foreground">Scan this code to capture leads for the {campaign.branch} branch.</p>
-                    </DialogContent>
-                  </Dialog>
+                  <div className="flex justify-center items-center gap-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <QrCode className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>{campaign.name} - QR Code</DialogTitle>
+                        </DialogHeader>
+                        <div className="p-4 flex items-center justify-center bg-white rounded-md">
+                           <Image 
+                             src={getQrCodeUrl(campaign.qrCodeUrl)}
+                             width={256}
+                             height={256}
+                             alt={`QR Code for ${campaign.name}`}
+                           />
+                        </div>
+                        <p className="text-center text-sm text-muted-foreground">Scan this code to capture leads for the {campaign.branch} branch.</p>
+                      </DialogContent>
+                    </Dialog>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the campaign
+                            and all associated data.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleRemoveCampaign(campaign.id)}>
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

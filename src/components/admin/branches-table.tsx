@@ -17,10 +17,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { PlusCircle, Loader2 } from "lucide-react"
+import { PlusCircle, Loader2, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import type { Franchise } from "@/lib/types"
 
@@ -36,6 +47,13 @@ export function BranchesTable({ branches }: { branches: Franchise[] }) {
     setOpen(false);
     // In a real app, you would revalidate the data here.
   }
+
+  async function handleRemoveBranch(branchId: string) {
+    console.log("Removing branch:", branchId);
+    // In a real app, you would make an API call and revalidate data.
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
 
   return (
     <Card>
@@ -77,6 +95,7 @@ export function BranchesTable({ branches }: { branches: Franchise[] }) {
               <TableHead className="text-right">Scans</TableHead>
               <TableHead className="text-right">Leads</TableHead>
               <TableHead className="text-right">Encashed</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -86,6 +105,30 @@ export function BranchesTable({ branches }: { branches: Franchise[] }) {
                 <TableCell className="text-right">{branch.totalScans.toLocaleString()}</TableCell>
                 <TableCell className="text-right">{branch.totalLeads.toLocaleString()}</TableCell>
                 <TableCell className="text-right">{branch.successfullyEncashed.toLocaleString()}</TableCell>
+                <TableCell className="text-right">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the branch
+                          and all associated data.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleRemoveBranch(branch.id)}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
