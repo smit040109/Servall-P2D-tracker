@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import {
   Table,
   TableBody,
@@ -23,7 +24,6 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { QrCode, PlusCircle, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
-import { QrCodeIcon } from "../icons/qr-code-icon"
 import type { Campaign } from "@/lib/types"
 
 export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
@@ -37,6 +37,14 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
     setIsCreating(false);
     setOpen(false);
     // In a real app, you would revalidate the data here.
+  }
+
+  const getQrCodeUrl = (campaignUrl: string) => {
+    // In a real app, you'd want to get the full URL.
+    // For this prototype, we'll assume it's relative to the deployed site.
+    const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://yourapp.com';
+    const fullUrl = `${siteUrl}${campaignUrl}`;
+    return `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(fullUrl)}&size=256x256&bgcolor=ffffff`;
   }
 
   return (
@@ -117,8 +125,13 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
                       <DialogHeader>
                         <DialogTitle>{campaign.name} - QR Code</DialogTitle>
                       </DialogHeader>
-                      <div className="p-4 flex items-center justify-center">
-                        <QrCodeIcon className="w-64 h-64 text-foreground" />
+                      <div className="p-4 flex items-center justify-center bg-white rounded-md">
+                         <Image 
+                           src={getQrCodeUrl(campaign.qrCodeUrl)}
+                           width={256}
+                           height={256}
+                           alt={`QR Code for ${campaign.name}`}
+                         />
                       </div>
                       <p className="text-center text-sm text-muted-foreground">Scan this code to capture leads for the {campaign.branch} branch.</p>
                     </DialogContent>
