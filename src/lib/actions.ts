@@ -338,7 +338,7 @@ export async function createLeadAction(prevState: any, formData: FormData) {
 
         console.log("Lead created:", newLeadRef.id);
 
-        revalidatePath('/admin'); // Revalidate admin pages to update stats
+        revalidatePath('/admin/leads'); // Revalidate leads pages to update stats
         return { success: true, message: 'Your details have been submitted successfully!' };
     
     } catch (error: any) {
@@ -420,3 +420,6 @@ export async function updateLeadStatus(
   }
 }
 
+
+
+    
