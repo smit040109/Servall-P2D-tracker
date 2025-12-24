@@ -32,7 +32,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { PlusCircle, Loader2, Trash2, CalendarIcon } from "lucide-react"
+import { PlusCircle, Loader2, Trash2, CalendarIcon, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card"
 import type { PlaceWithStats } from "@/lib/types"
 import { Badge } from "../ui/badge"
@@ -208,10 +208,10 @@ export function PlacesTable({ places }: { places: PlaceWithStats[] }) {
             <TableRow>
               <TableHead>Place Name</TableHead>
               <TableHead>Category</TableHead>
+              <TableHead className="text-right">ROI Score</TableHead>
               <TableHead className="text-right">Cost (₹)</TableHead>
               <TableHead className="text-right">Leads</TableHead>
               <TableHead className="text-right">Encashed</TableHead>
-              <TableHead className="text-right">Cost/Lead (₹)</TableHead>
               <TableHead className="text-right">Cost/Encash (₹)</TableHead>
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
@@ -221,10 +221,15 @@ export function PlacesTable({ places }: { places: PlaceWithStats[] }) {
               <TableRow key={place.id}>
                 <TableCell className="font-medium">{place.name} <span className="text-muted-foreground text-xs block">{place.placementType}</span></TableCell>
                 <TableCell><Badge variant="secondary">{place.category}</Badge></TableCell>
+                <TableCell className="text-right font-semibold">
+                    <div className="flex items-center justify-end gap-2">
+                        <TrendingUp className={`h-4 w-4 ${place.roiScore >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+                        <span>{place.roiScore.toLocaleString()}</span>
+                    </div>
+                </TableCell>
                 <TableCell className="text-right">₹{place.monthlyCost.toLocaleString()}</TableCell>
                 <TableCell className="text-right">{place.totalLeads.toLocaleString()}</TableCell>
                 <TableCell className="text-right">{place.totalEncashed.toLocaleString()}</TableCell>
-                <TableCell className="text-right">{place.costPerLead.toFixed(2)}</TableCell>
                 <TableCell className="text-right text-primary font-semibold">{place.costPerEncashment.toFixed(2)}</TableCell>
                 <TableCell className="text-center">
                   <AlertDialog>

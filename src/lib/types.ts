@@ -124,6 +124,7 @@ export type PlaceWithStats = Place & {
   totalEncashed: number;
   costPerLead: number;
   costPerEncashment: number;
+  roiScore: number;
 }
 
 export type Staff = {

@@ -264,6 +264,9 @@ export async function getPlacesWithStats(): Promise<PlaceWithStats[]> {
         readData<CampaignSource[]>('campaignSources.json'),
         getAllLeads()
     ]);
+    
+    // This can be a config value in a real app
+    const AVG_TICKET_VALUE = 2500; 
 
     const placeStats = new Map<string, { totalLeads: number; totalEncashed: number }>();
 
@@ -291,18 +294,23 @@ export async function getPlacesWithStats(): Promise<PlaceWithStats[]> {
     }
     
     // Combine places with their stats and calculate ROI metrics
-    return places.map(place => {
+    const placesWithStats = places.map(place => {
         const stats = placeStats.get(place.id) || { totalLeads: 0, totalEncashed: 0 };
         const costPerLead = stats.totalLeads > 0 ? place.monthlyCost / stats.totalLeads : 0;
         const costPerEncashment = stats.totalEncashed > 0 ? place.monthlyCost / stats.totalEncashed : 0;
+        const roiScore = (stats.totalEncashed * AVG_TICKET_VALUE) - place.monthlyCost;
         
         return {
             ...place,
             ...stats,
             costPerLead,
             costPerEncashment,
+            roiScore,
         };
     });
+
+    // Sort by the highest ROI score
+    return placesWithStats.sort((a, b) => b.roiScore - a.roiScore);
 }
 
 export async function getCampaignSources(campaignId: string): Promise<CampaignSource[]> {
