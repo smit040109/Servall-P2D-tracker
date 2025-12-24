@@ -1,4 +1,3 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -226,125 +225,12 @@ export async function deleteBranch(branchId: string) {
 
 // --- Lead Actions ---
 
-const leadSchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  phone: z.string().regex(/^\d{10}$/, { message: 'Please enter a valid 10-digit phone number.' }),
-  vehicle: z.string().min(2, { message: 'Vehicle model must be at least 2 characters.' }),
-  pincode: z.string().regex(/^\d{6}$/, { message: 'Please enter a valid 6-digit pincode.' }).optional().or(z.literal('')),
-  campaignId: z.string(),
-  sourceId: z.string(),
-});
-
-
+// This is kept for other potential server-side logic, but lead creation is now on the client.
 export async function createLeadAction(prevState: any, formData: FormData) {
-    if (!db) {
-        return { success: false, message: "Firestore DB not initialized" };
-    }
-
-    const leadData = Object.fromEntries(formData.entries());
-    const validatedFields = leadSchema.safeParse(leadData);
-
-    if (!validatedFields.success) {
-        return { 
-            success: false, 
-            message: "Validation failed.", 
-            errors: validatedFields.error.flatten().fieldErrors 
-        };
-    }
-    
-    const { pincode, ...restOfValidatedData } = validatedFields.data;
-    
-
-
-    try {
-        const [places, campaignSources, campaigns] = await Promise.all([
-            readData<Place[]>('places.json'),
-            readData<CampaignSource[]>('campaignSources.json'),
-            readData<Campaign[]>('campaigns.json')
-        ]);
-        
-        const campaignSource = campaignSources.find(cs => cs.id === validatedFields.data.sourceId);
-        const place = campaignSource ? places.find(p => p.id === campaignSource.sourceId) : undefined;
-        const campaign = campaigns.find(c => c.id === validatedFields.data.campaignId);
-
-        if (!campaign || !place) {
-            return { success: false, message: "Invalid campaign or place data." };
-        }
-
-        const batch = writeBatch(db);
-        const newLeadRef = doc(collection(db, "leads"));
-
-        const newLead: Omit<Lead, 'id'> = {
-            name: validatedFields.data.name,
-            phone: validatedFields.data.phone,
-            vehicle: validatedFields.data.vehicle,
-            campaignId: validatedFields.data.campaignId,
-            sourceId: validatedFields.data.sourceId,
-            placeId: place.id,
-            branchId: campaign.branchId,
-            category: place.category,
-            status: "pending",
-            createdAt: serverTimestamp(),
-            timeline: [
-                { event: "FORM_SUBMITTED", timestamp: serverTimestamp(), source: "customer" },
-            ],
-        };
-        
-        if (pincode) {
-            newLead.pincode = pincode;
-        }
-
-        batch.set(newLeadRef, newLead);
-
-        const customersRef = collection(db, "customers");
-        const q = query(customersRef, where("phone", "==", validatedFields.data.phone));
-        
-        const querySnapshot = await getDocs(q);
-        
-        if (querySnapshot.empty) {
-            const newCustomerRef = doc(customersRef);
-            const newCustomer: Omit<Customer, 'id'> = {
-                name: validatedFields.data.name,
-                phone: validatedFields.data.phone,
-                firstVisitDate: serverTimestamp(),
-                lastVisitDate: serverTimestamp(),
-                totalVisits: 1,
-                totalEncashments: 0,
-                associatedLeadIds: [newLeadRef.id]
-            };
-            if (pincode) {
-                newCustomer.pincode = pincode;
-            }
-            batch.set(newCustomerRef, newCustomer);
-        } else {
-            const customerDoc = querySnapshot.docs[0];
-            const customerRef = doc(db, "customers", customerDoc.id);
-            const customerData = customerDoc.data() as Customer;
-
-            const updateData: any = {
-                lastVisitDate: serverTimestamp(),
-                totalVisits: (customerData.totalVisits || 0) + 1,
-                associatedLeadIds: arrayUnion(newLeadRef.id)
-            };
-
-            if (!customerData.pincode && pincode) {
-                updateData.pincode = pincode;
-            }
-
-            batch.update(customerRef, updateData);
-        }
-
-        await batch.commit();
-
-        console.log("Lead created:", newLeadRef.id);
-
-        revalidatePath('/admin/leads'); // Revalidate leads pages to update stats
-        return { success: true, message: 'Your details have been submitted successfully!' };
-    
-    } catch (error: any) {
-        console.error("🔥 FIRESTORE ERROR:", error);
-        return { success: false, message: error.message || "Could not save your details. Please try again." };
-    }
+    revalidatePath('/admin/leads');
+    // The main logic is now client-side, but we can still perform
+    // server-side revalidation or other tasks here if needed.
+    return { success: true, message: 'Revalidation triggered.' };
 }
 
 

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,10 +16,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Car, Loader2 } from 'lucide-react';
-import React, { useActionState } from 'react';
+import React from 'react';
 import Logo from '@/components/logo';
 import { useSearchParams } from 'next/navigation';
-import { createLeadAction } from '@/lib/actions';
+import { clientCreateLead } from '@/lib/clientCreateLead';
+import { getCampaignById, getPlaces } from '@/lib/data';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -29,20 +29,14 @@ const formSchema = z.object({
   pincode: z.string().regex(/^\d{6}$/, { message: 'Please enter a valid 6-digit pincode.' }).optional().or(z.literal('')),
 });
 
-const initialState = {
-  message: '',
-  success: false,
-  errors: undefined,
-}
-
 // This page will be available at /campaign/[campaignId]
 export default function CampaignLeadCapturePage({ params: paramsPromise }: { params: Promise<{ campaignId: string }> }) {
   const params = React.use(paramsPromise);
   const searchParams = useSearchParams();
   const sourceId = searchParams.get('sourceId');
-
   const { toast } = useToast();
-  const [state, formAction] = useActionState(createLeadAction, initialState);
+
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -54,24 +48,56 @@ export default function CampaignLeadCapturePage({ params: paramsPromise }: { par
     },
   });
 
-  const { isSubmitting } = form.formState;
-
-  React.useEffect(() => {
-    if (state.success) {
-      toast({
-          title: 'Success!',
-          description: state.message,
-      });
-      form.reset();
-    } else if (state.message) { // Handle errors
-      toast({
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!sourceId) {
+       toast({
           variant: "destructive",
           title: "Submission Failed",
-          description: state.message,
+          description: "Missing tracking information.",
       });
+      return;
     }
-  }, [state, form, toast]);
 
+    setIsSubmitting(true);
+    
+    try {
+      // These are server-side functions but can be called in client components
+      const campaign = await getCampaignById(params.campaignId);
+      const places = await getPlaces();
+      
+      const place = places.find(p => p.id === sourceId);
+
+      const leadData = {
+          ...values,
+          campaignId: params.campaignId,
+          sourceId: sourceId,
+          placeId: place?.id,
+          branchId: campaign?.branchId,
+          category: place?.category,
+          timeline: [
+              { event: "FORM_SUBMITTED", timestamp: new Date().toISOString(), source: "customer" },
+          ],
+      };
+
+      const docRef = await clientCreateLead(leadData);
+      console.log("Lead created:", docRef.id);
+      
+      toast({
+          title: 'Success!',
+          description: 'Your details have been submitted successfully!',
+      });
+      form.reset();
+    } catch (error: any) {
+        console.error("🔥 FIRESTORE ERROR:", error);
+        toast({
+            variant: "destructive",
+            title: "Submission Failed",
+            description: error.message || "Could not save your details. Please try again.",
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
+  }
 
   if (!sourceId) {
       return (
@@ -104,9 +130,7 @@ export default function CampaignLeadCapturePage({ params: paramsPromise }: { par
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form action={formAction} className="space-y-6">
-               <input type="hidden" name="campaignId" value={params.campaignId} />
-               <input type="hidden" name="sourceId" value={sourceId} />
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
                 name="name"
