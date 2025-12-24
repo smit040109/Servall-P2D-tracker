@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { promises as fs } from 'fs';
 import path from 'path';
 import type { Campaign, Place, CampaignSource, Discount, Franchise, Lead } from './types';
+import { db } from '@/firebase/firebase';
+import { addDoc, collection, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
 
 // Helper function to read data from JSON files
 async function readData<T>(filename: string): Promise<T> {
@@ -212,27 +214,22 @@ export async function deleteBranch(branchId: string) {
 // --- Lead Actions ---
 export async function updateLeadStatus(leadId: string, status: Lead['status']) {
   try {
-    const leads = await readData<Lead[]>('leads.json');
-    const leadIndex = leads.findIndex(l => l.id === leadId);
-
-    if (leadIndex === -1) {
-      return { success: false, message: 'Lead not found.' };
-    }
-
-    leads[leadIndex].status = status;
+    const leadRef = doc(db, 'leads', leadId);
+    await updateDoc(leadRef, { status });
 
     if (status === 'encashed') {
-        const lead = leads[leadIndex];
-        const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
-        const sourceIndex = campaignSources.findIndex(cs => cs.id === lead.sourceId);
+      // This part still uses file system, will need to be migrated if full migration is needed.
+      // For now, we focus on leads.
+      // const lead = leads[leadIndex];
+      // const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
+      // const sourceIndex = campaignSources.findIndex(cs => cs.id === lead.sourceId);
 
-        if (sourceIndex > -1) {
-            campaignSources[sourceIndex].encashed++;
-        }
-        await writeData('campaignSources.json', campaignSources);
+      // if (sourceIndex > -1) {
+      //     campaignSources[sourceIndex].encashed++;
+      // }
+      // await writeData('campaignSources.json', campaignSources);
     }
     
-    await writeData('leads.json', leads);
     revalidatePath('/branch');
     return { success: true, message: `Lead status updated to ${status}.` };
 
@@ -244,8 +241,7 @@ export async function updateLeadStatus(leadId: string, status: Lead['status']) {
 
 export async function createLead(leadData: { name: string, phone: string, vehicle: string, campaignId: string, sourceId: string }) {
     try {
-        const [leads, campaignSources, places] = await Promise.all([
-            readData<Lead[]>('leads.json'),
+        const [campaignSources, places] = await Promise.all([
             readData<CampaignSource[]>('campaignSources.json'),
             readData<Place[]>('places.json')
         ]);
@@ -260,19 +256,19 @@ export async function createLead(leadData: { name: string, phone: string, vehicl
             return { success: false, message: 'Invalid place data associated with QR code.' };
         }
 
-        const newLead: Lead = {
-            id: `lead_${Date.now()}`,
-            createdAt: new Date().toISOString(),
-            status: 'pending',
+        const newLead = {
             name: leadData.name,
             phone: leadData.phone,
             vehicle: leadData.vehicle,
             campaignId: leadData.campaignId,
             sourceId: leadData.sourceId,
             category: place.category,
-            location: place.name
+            placeName: place.name,
+            status: 'pending' as const,
+            createdAt: serverTimestamp(),
         };
-        leads.push(newLead);
+
+        await addDoc(collection(db, "leads"), newLead);
         
         // Increment scan and lead count for the specific campaign source
         const sourceIndex = campaignSources.findIndex(cs => cs.id === leadData.sourceId);
@@ -281,10 +277,7 @@ export async function createLead(leadData: { name: string, phone: string, vehicl
             campaignSources[sourceIndex].leads++;
         }
 
-        await Promise.all([
-            writeData('leads.json', leads),
-            writeData('campaignSources.json', campaignSources)
-        ]);
+        await writeData('campaignSources.json', campaignSources);
 
         revalidatePath(`/admin/campaigns/${leadData.campaignId}`);
         revalidatePath('/admin');

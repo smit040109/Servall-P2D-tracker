@@ -2,6 +2,9 @@
 import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place, CampaignSource, CategoryLead, LocationLead } from './types';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { db } from '@/firebase/firebase';
+import { collection, query, where, getDocs, Timestamp, DocumentData } from 'firebase/firestore';
+
 
 // Helper function to read data from JSON files
 async function readData<T>(filename: string): Promise<T> {
@@ -48,14 +51,46 @@ export async function getCampaignById(campaignId: string): Promise<Campaign | un
     return campaigns.find(c => c.id === campaignId);
 }
 
-export async function getLeadByPhone(phone: string): Promise<Lead | undefined> {
-    const leads = await readData<Lead[]>('leads.json');
-    return leads.find(lead => lead.phone === phone);
+function convertFirestoreDocToLead(doc: DocumentData): Lead {
+    const data = doc.data();
+    return {
+        id: doc.id,
+        name: data.name,
+        phone: data.phone,
+        vehicle: data.vehicle,
+        status: data.status,
+        campaignId: data.campaignId,
+        sourceId: data.sourceId,
+        createdAt: (data.createdAt as Timestamp)?.toDate().toISOString() || new Date().toISOString(),
+        category: data.category,
+        location: data.placeName,
+    };
 }
+
+
+export async function getLeadByPhone(phone: string): Promise<Lead | undefined> {
+    const leadsRef = collection(db, 'leads');
+    const q = query(leadsRef, where('phone', '==', phone));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+        return undefined;
+    }
+
+    // Assuming phone number is unique, return the first found lead
+    return convertFirestoreDocToLead(querySnapshot.docs[0]);
+}
+
+async function getAllLeads(): Promise<Lead[]> {
+    const leadsRef = collection(db, 'leads');
+    const querySnapshot = await getDocs(leadsRef);
+    return querySnapshot.docs.map(convertFirestoreDocToLead);
+}
+
 
 export async function getAdminAnalytics(): Promise<AnalyticsData> {
     const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
-    const leads = await readData<Lead[]>('leads.json');
+    const leads = await getAllLeads();
     
     const totalScans = campaignSources.reduce((sum, s) => sum + s.scans, 0);
     const totalLeads = leads.length;
@@ -79,7 +114,7 @@ export async function getAdminAnalytics(): Promise<AnalyticsData> {
 }
 
 export async function getCategoryLeads(): Promise<CategoryLead[]> {
-    const leads = await readData<Lead[]>('leads.json');
+    const leads = await getAllLeads();
     const categoryCounts: Record<string, number> = {};
     leads.forEach(lead => {
         if (lead.category) {
@@ -90,8 +125,7 @@ export async function getCategoryLeads(): Promise<CategoryLead[]> {
 }
 
 export async function getLocationLeads(): Promise<LocationLead[]> {
-    const leads = await readData<Lead[]>('leads.json');
-    const places = await getPlaces();
+    const leads = await getAllLeads();
     const locationCounts: Record<string, { leads: number, category: string }> = {};
 
     leads.forEach(lead => {

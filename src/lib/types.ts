@@ -1,3 +1,4 @@
+import { FieldValue } from "firebase/firestore";
 
 export type Campaign = {
   id: string;
@@ -15,7 +16,7 @@ export type Lead = {
   status: 'pending' | 'encashed' | 'rejected';
   campaignId: string;
   sourceId: string; // This is the ID of the CampaignSource document
-  createdAt: string;
+  createdAt: string | FieldValue;
   category?: string;
   location?: string;
 };
