@@ -1,3 +1,4 @@
+
 import { FieldValue } from "firebase/firestore";
 
 export type Campaign = {
@@ -37,6 +38,7 @@ export type Lead = {
   googleReview?: boolean;
   campaignName?: string; // Added for UI
   placeName?: string; // Added for UI
+  leadScore?: number;
 };
 
 export type Customer = {
