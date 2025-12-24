@@ -1,2 +1,14 @@
-
-[]
+[
+  {
+    "id": "lead_1766576751297",
+    "createdAt": "2025-12-24T11:45:51.297Z",
+    "status": "pending",
+    "name": "Vasu bharucha",
+    "phone": "9023376123",
+    "vehicle": "Splender ",
+    "campaignId": "cam_1766575789001",
+    "sourceId": "cs_1766575806898",
+    "category": "Local Shop",
+    "location": "smit"
+  }
+]

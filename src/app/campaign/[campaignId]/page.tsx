@@ -63,6 +63,7 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
       sourceId: sourceId
     };
 
+    console.log("Submitting lead:", leadData);
     const result = await createLead(leadData);
 
     if (result.success) {
