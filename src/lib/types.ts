@@ -29,9 +29,19 @@ export type Lead = {
   location?: string;
 };
 
+export type Customer = {
+    id: string; // Firestore document ID
+    phone: string; // The unique identifier
+    firstVisitDate: string | FieldValue;
+    lastVisitDate: string | FieldValue;
+    totalVisits: number; // a.k.a. total leads
+    totalEncashments: number;
+    associatedLeadIds: string[];
+}
+
 export type Franchise = {
   id: string;
-  name: string;
+  name:string;
   totalScans: number;
   totalLeads: number;
   successfullyEncashed: number;
@@ -65,6 +75,11 @@ export type AnalyticsData = {
     leads: number;
     encashed: number;
   }[];
+  customerStats?: {
+    totalCustomers: number;
+    newCustomers: number;
+    repeatCustomers: number;
+  };
 }
 
 export type Discount = {

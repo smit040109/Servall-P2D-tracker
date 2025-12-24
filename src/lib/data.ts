@@ -1,5 +1,5 @@
 
-import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place, CampaignSource, CategoryLead, LocationLead, PlaceWithStats, TimelineEvent } from './types';
+import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place, CampaignSource, CategoryLead, LocationLead, PlaceWithStats, TimelineEvent, Customer } from './types';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { db } from '@/firebase/firebase';
@@ -106,20 +106,42 @@ async function getAllLeads(): Promise<Lead[]> {
     return querySnapshot.docs.map(convertFirestoreDocToLead);
 }
 
+async function getAllCustomers(): Promise<Customer[]> {
+    if (!db) {
+        console.warn("Firestore is not initialized. Cannot fetch customers.");
+        return [];
+    }
+    const customersRef = collection(db, 'customers');
+    const querySnapshot = await getDocs(customersRef);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer));
+}
+
 
 export async function getAdminAnalytics(): Promise<AnalyticsData> {
-    const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
-    // Fetch all leads from Firestore. This is the single source of truth.
-    const leads = await getAllLeads();
+    const [campaignSources, leads, customers] = await Promise.all([
+        readData<CampaignSource[]>('campaignSources.json'),
+        getAllLeads(),
+        getAllCustomers(),
+    ]);
     
     const totalScans = campaignSources.reduce((sum, s) => sum + s.scans, 0);
     const totalLeads = leads.length;
     const successfullyEncashed = leads.filter(l => l.status === 'encashed').length;
 
+    // Customer stats
+    const totalCustomers = customers.length;
+    const repeatCustomers = customers.filter(c => c.totalVisits > 1).length;
+    const newCustomers = totalCustomers - repeatCustomers;
+
     const analyticsData: AnalyticsData = {
         totalScans,
         totalLeads,
         successfullyEncashed,
+        customerStats: {
+            totalCustomers,
+            newCustomers,
+            repeatCustomers,
+        },
         leadsOverTime: [ // This is mock data, but in a real scenario, it would be aggregated from the `leads` collection.
             { date: 'Oct 1', leads: 50, encashed: 20 },
             { date: 'Oct 2', leads: 75, encashed: 35 },

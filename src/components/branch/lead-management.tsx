@@ -34,7 +34,7 @@ export default function LeadManagement() {
 
   const handleVerified = async () => {
     if (lead) {
-      const result = await updateLeadStatus(lead.id, 'encashed');
+      const result = await updateLeadStatus(lead.id, lead.phone, 'encashed');
       if (result.success) {
         // Refetch the lead to get the updated timeline
         const updatedLead = await getLeadByPhone(phone);

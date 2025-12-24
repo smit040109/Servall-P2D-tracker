@@ -4,9 +4,9 @@
 import { revalidatePath } from 'next/cache';
 import { promises as fs } from 'fs';
 import path from 'path';
-import type { Campaign, Place, CampaignSource, Discount, Franchise, Lead, TimelineEvent } from './types';
+import type { Campaign, Place, CampaignSource, Discount, Franchise, Lead, TimelineEvent, Customer } from './types';
 import { db } from '@/firebase/firebase';
-import { addDoc, collection, serverTimestamp, updateDoc, doc, arrayUnion } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, updateDoc, doc, arrayUnion, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { format } from 'date-fns';
 
 // Helper function to read data from JSON files
@@ -209,7 +209,7 @@ export async function deleteBranch(branchId: string) {
     try {
         let branches = await readData<Franchise[]>('franchises.json');
         branches = branches.filter((b) => b.id !== branchId);
-        await writeData('branches.json', branches);
+        await writeData('franchises.json', branches);
         revalidatePath('/admin/branches');
         return { success: true, message: 'Branch deleted successfully.' };
     } catch (error) {
@@ -219,26 +219,46 @@ export async function deleteBranch(branchId: string) {
 
 
 // --- Lead Actions ---
-export async function updateLeadStatus(leadId: string, status: Lead['status']) {
+export async function updateLeadStatus(leadId: string, leadPhone: string, status: Lead['status']) {
   if (!db) {
     console.error("Firestore is not initialized. Cannot update lead status.");
     return { success: false, message: 'Database connection is not available.' };
   }
   
+  const batch = writeBatch(db);
+
   try {
+    // 1. Update the lead's status and timeline
     const leadRef = doc(db, 'leads', leadId);
-    
     const newEvent: TimelineEvent = {
         event: 'Offer Encashed',
         timestamp: serverTimestamp(),
         source: 'Branch',
         notes: `Status changed to ${status}`
     }
-
-    await updateDoc(leadRef, { 
+    batch.update(leadRef, { 
         status: status,
         timeline: arrayUnion(newEvent)
     });
+
+    // 2. If status is 'encashed', update the customer record
+    if (status === 'encashed') {
+        const customersRef = collection(db, "customers");
+        const q = query(customersRef, where("phone", "==", leadPhone));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            const customerDoc = querySnapshot.docs[0];
+            const customerRef = doc(db, "customers", customerDoc.id);
+            const customerData = customerDoc.data() as Customer;
+            batch.update(customerRef, {
+                totalEncashments: (customerData.totalEncashments || 0) + 1
+            });
+        }
+    }
+
+    // 3. Commit all batched writes
+    await batch.commit();
 
     revalidatePath('/branch');
     return { success: true, message: `Lead status updated to ${status}.` };
