@@ -242,7 +242,7 @@ export async function updateLeadStatus(leadId: string, status: Lead['status']) {
   }
 }
 
-export async function createLead(leadData: Omit<Lead, 'id' | 'createdAt' | 'status' | 'category' | 'location'> & { sourceId: string }) {
+export async function createLead(leadData: { name: string, phone: string, vehicle: string, campaignId: string, sourceId: string }) {
     try {
         const [leads, campaignSources, places] = await Promise.all([
             readData<Lead[]>('leads.json'),
@@ -264,21 +264,30 @@ export async function createLead(leadData: Omit<Lead, 'id' | 'createdAt' | 'stat
             id: `lead_${Date.now()}`,
             createdAt: new Date().toISOString(),
             status: 'pending',
-            ...leadData,
+            name: leadData.name,
+            phone: leadData.phone,
+            vehicle: leadData.vehicle,
+            campaignId: leadData.campaignId,
+            sourceId: leadData.sourceId,
             category: place.category,
             location: place.name
         };
         leads.push(newLead);
         
         // Increment scan and lead count for the specific campaign source
-        source.scans++; 
-        source.leads++;
-        
+        const sourceIndex = campaignSources.findIndex(cs => cs.id === leadData.sourceId);
+        if (sourceIndex > -1) {
+            campaignSources[sourceIndex].scans++;
+            campaignSources[sourceIndex].leads++;
+        }
+
         await Promise.all([
             writeData('leads.json', leads),
             writeData('campaignSources.json', campaignSources)
         ]);
 
+        revalidatePath(`/admin/campaigns/${leadData.campaignId}`);
+        revalidatePath('/admin');
         return { success: true, message: 'Lead created successfully' };
     } catch(e) {
         console.error("Lead creation error:", e);
