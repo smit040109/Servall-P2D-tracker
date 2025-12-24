@@ -169,7 +169,7 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
                         <Input placeholder="e.g., Toyota Camry" {...field} />
                         </FormControl>
                         <FormMessage />
-                    </Item>
+                    </FormItem>
                     )}
                 />
                 <FormField
