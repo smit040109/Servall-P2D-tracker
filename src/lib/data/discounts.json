@@ -1,2 +1,10 @@
-
-[]
+[
+  {
+    "id": "disc_1766575778524",
+    "code": "SMIT2026",
+    "description": "50% off",
+    "type": "percentage",
+    "value": 2,
+    "status": "active"
+  }
+]

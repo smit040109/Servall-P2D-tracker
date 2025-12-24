@@ -12,6 +12,17 @@ async function readData<T>(filename: string): Promise<T> {
     const fileContent = await fs.readFile(filePath, 'utf-8');
     return JSON.parse(fileContent);
   } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      const defaultDataPath = path.join(process.cwd(), 'src', 'lib', 'data', `default-${filename}`);
+      try {
+          const defaultFileContent = await fs.readFile(defaultDataPath, 'utf-8');
+          await fs.writeFile(filePath, defaultFileContent, 'utf-8');
+          return JSON.parse(defaultFileContent);
+      } catch (readError) {
+          console.error(`Error reading default data for ${filename}:`, readError);
+          return [] as T;
+      }
+    }
     console.error(`Error reading ${filename}:`, error);
     // Return empty array or object if file doesn't exist or is empty
     return [] as T;
@@ -176,7 +187,8 @@ export async function createBranch(formData: FormData) {
     await writeData('franchises.json', branches);
     revalidatePath('/admin/branches');
     return { success: true, message: 'Branch created successfully.' };
-  } catch (error) {
+  } catch (error)
+ {
     return { success: false, message: 'Failed to create branch.' };
   }
 }

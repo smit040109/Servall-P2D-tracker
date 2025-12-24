@@ -5,9 +5,9 @@ import { notFound } from "next/navigation";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";

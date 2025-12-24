@@ -1,2 +1,9 @@
-
-[]
+[
+  {
+    "id": "cam_1766575789001",
+    "name": "smit",
+    "city": "Surat",
+    "branchId": "fran_1766575734906",
+    "discountId": "disc_1766575778524"
+  }
+]
