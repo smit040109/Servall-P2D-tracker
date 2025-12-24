@@ -1,7 +1,6 @@
 
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -13,13 +12,19 @@ const firebaseConfig = {
 };
 
 let app;
-if (getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
+// Initialize Firebase only if the config is valid
+if (firebaseConfig.apiKey) {
+    if (getApps().length === 0) {
+        app = initializeApp(firebaseConfig);
+    } else {
+        app = getApp();
+    }
 } else {
-  app = getApp();
+    app = null;
+    console.warn("Firebase config is missing. Firebase features will be disabled. Please populate your .env.local file.");
 }
 
-const db = getFirestore(app);
-const auth = getAuth(app);
 
-export { db, auth };
+const db = app ? getFirestore(app) : null;
+
+export { db };
