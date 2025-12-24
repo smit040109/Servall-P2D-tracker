@@ -30,8 +30,6 @@ const formSchema = z.object({
 // This page will be available at /campaign/[campaignId]
 export default function CampaignLeadCapturePage({ params }: { params: { campaignId: string } }) {
   const searchParams = useSearchParams();
-  const category = searchParams.get('category');
-  const location = searchParams.get('location');
   const sourceId = searchParams.get('sourceId');
 
   const { toast } = useToast();
@@ -49,7 +47,7 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     
-    if (!category || !location || !sourceId) {
+    if (!sourceId) {
         toast({
             variant: "destructive",
             title: "Error",
@@ -62,8 +60,6 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
     const leadData = { 
       ...values, 
       campaignId: params.campaignId, 
-      category: category,
-      location: location,
       sourceId: sourceId
     };
 
@@ -79,7 +75,7 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
          toast({
             variant: "destructive",
             title: "Submission Failed",
-            description: "Could not save your details. Please try again.",
+            description: result.message || "Could not save your details. Please try again.",
         });
     }
     

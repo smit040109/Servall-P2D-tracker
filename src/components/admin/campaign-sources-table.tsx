@@ -80,18 +80,12 @@ export function CampaignSourcesTable({ campaignSources, allPlaces, campaign }: C
 
   const getPlaceDetails = (placeId: string) => allPlaces.find(p => p.id === placeId);
 
-  const getQrCodeUrl = (campaignId: string, sourceId: string) => {
+  const getQrCodeUrl = (campaignId: string, campaignSourceId: string) => {
     const siteUrl = typeof window !== 'undefined' 
       ? window.location.origin 
       : 'https://your-app-domain.com';
-
-    const place = getPlaceDetails(sourceId);
-    if (!place) return '';
-    
-    const category = place.category.toLowerCase().replace(/\s+/g, '_');
-    const location = place.name.toLowerCase().replace(/\s+/g, '_');
       
-    const fullUrl = `${siteUrl}/campaign/${campaignId}?category=${category}&location=${location}&sourceId=${sourceId}`;
+    const fullUrl = `${siteUrl}/campaign/${campaignId}?sourceId=${campaignSourceId}`;
     return `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(fullUrl)}&size=256x256&bgcolor=ffffff`;
   }
 
@@ -177,7 +171,7 @@ export function CampaignSourcesTable({ campaignSources, allPlaces, campaign }: C
                         </DialogHeader>
                         <div className="p-4 flex items-center justify-center bg-white rounded-md">
                            <Image 
-                             src={getQrCodeUrl(cs.campaignId, cs.sourceId)}
+                             src={getQrCodeUrl(cs.campaignId, cs.id)}
                              width={256}
                              height={256}
                              alt={`QR Code for ${campaign.name}`}

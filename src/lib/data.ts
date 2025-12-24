@@ -95,14 +95,12 @@ export async function getLocationLeads(): Promise<LocationLead[]> {
     const locationCounts: Record<string, { leads: number, category: string }> = {};
 
     leads.forEach(lead => {
-        if (lead.location) {
-            const place = places.find(p => p.name.toLowerCase().replace(/\s+/g, '_') === lead.location);
-            if (place) {
-                if (!locationCounts[place.name]) {
-                    locationCounts[place.name] = { leads: 0, category: place.category };
-                }
-                locationCounts[place.name].leads++;
+        if (lead.location && lead.category) {
+            const locationKey = lead.location; // Use the stored location name directly
+            if (!locationCounts[locationKey]) {
+                locationCounts[locationKey] = { leads: 0, category: lead.category };
             }
+            locationCounts[locationKey].leads++;
         }
     });
     return Object.entries(locationCounts).map(([location, data]) => ({ location, leads: data.leads, category: data.category }));
@@ -163,30 +161,46 @@ export async function getCampaignSourceStats(campaignId: string) {
     }, { scans: 0, leads: 0, encashed: 0 });
 }
 
-export async function createLead(leadData: Omit<Lead, 'id' | 'createdAt' | 'status'>) {
+export async function createLead(leadData: Omit<Lead, 'id' | 'createdAt' | 'status' | 'category' | 'location'> & { sourceId: string }) {
     try {
-        const leads = await readData<Lead[]>('leads.json');
+        const [leads, campaignSources, places] = await Promise.all([
+            readData<Lead[]>('leads.json'),
+            readData<CampaignSource[]>('campaignSources.json'),
+            readData<Place[]>('places.json')
+        ]);
+        
+        const source = campaignSources.find(cs => cs.id === leadData.sourceId);
+        if (!source) {
+            return { success: false, message: 'Invalid QR code. Source not found.' };
+        }
+        
+        const place = places.find(p => p.id === source.sourceId);
+        if (!place) {
+            return { success: false, message: 'Invalid place data associated with QR code.' };
+        }
+
         const newLead: Lead = {
             id: `lead_${Date.now()}`,
             createdAt: new Date().toISOString(),
             status: 'pending',
-            ...leadData
+            ...leadData,
+            category: place.category,
+            location: place.name
         };
         leads.push(newLead);
-        await writeData('leads.json', leads);
+        
+        // Increment scan and lead count for the specific campaign source
+        source.scans++; 
+        source.leads++;
+        
+        await Promise.all([
+            writeData('leads.json', leads),
+            writeData('campaignSources.json', campaignSources)
+        ]);
 
-        // Also increment scan and lead count
-        if(newLead.campaignId && newLead.sourceId) {
-             const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
-             const source = campaignSources.find(cs => cs.campaignId === newLead.campaignId && cs.sourceId === newLead.sourceId);
-             if (source) {
-                 source.scans++; // Increment scan on lead creation for simplicity
-                 source.leads++;
-                 await writeData('campaignSources.json', campaignSources);
-             }
-        }
         return { success: true, message: 'Lead created successfully' };
     } catch(e) {
-        return { success: false, message: 'Failed to create lead' };
+        console.error("Lead creation error:", e);
+        return { success: false, message: 'Failed to create lead due to a server error.' };
     }
 }

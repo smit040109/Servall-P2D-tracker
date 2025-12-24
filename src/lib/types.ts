@@ -14,7 +14,7 @@ export type Lead = {
   vehicle: string;
   status: 'pending' | 'encashed' | 'rejected';
   campaignId: string;
-  sourceId: string; // This will now refer to a Place's ID
+  sourceId: string; // This is the ID of the CampaignSource document
   createdAt: string;
   category?: string;
   location?: string;
@@ -35,9 +35,9 @@ export type Place = {
 };
 
 export type CampaignSource = {
-    id: string;
+    id: string; // Unique ID for this specific campaign-place link, e.g. "cs_1"
     campaignId: string;
-    sourceId: string; // This will now be placeId
+    sourceId: string; // This will now be placeId from the master Places list
     scans: number;
     leads: number;
     encashed: number;
