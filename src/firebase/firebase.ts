@@ -17,13 +17,9 @@ let auth: Auth | null = null;
 
 // Check if all required environment variables are present, regardless of environment (client/server)
 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-  if (typeof window !== 'undefined') {
-    // On the client, a console warning is sufficient.
-    console.warn("Missing Firebase configuration. Please check your .env.local file. Firebase features will be disabled.");
-  } else {
-    // On the server, we can also log a warning. The app won't crash.
-    console.warn("SERVER-SIDE WARNING: Missing Firebase configuration. Firebase features will be disabled.");
-  }
+    // On both client and server, a console warning is sufficient.
+    // This allows the app to build and run, gracefully disabling Firebase features.
+    console.warn("WARNING: Missing Firebase configuration. Please check your .env.local file. Firebase features will be disabled.");
 } else {
   // Initialize Firebase only if config is valid
   if (!getApps().length) {
