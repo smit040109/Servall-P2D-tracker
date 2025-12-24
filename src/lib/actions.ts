@@ -244,12 +244,12 @@ export async function updateLeadStatus(leadId: string, status: Lead['status']) {
 }
 
 export async function createLead(leadData: { name: string, phone: string, vehicle: string, campaignId: string, sourceId: string }) {
+    if (!db) {
+        console.error("Firestore is not initialized. Cannot create lead.");
+        return { success: false, message: 'Database connection is not available.' };
+    }
+    
     try {
-        if (!db) {
-            console.error("Firestore is not initialized. Cannot create lead.");
-            return { success: false, message: 'Database connection is not available.' };
-        }
-        
         const [campaignSources, places] = await Promise.all([
             readData<CampaignSource[]>('campaignSources.json'),
             readData<Place[]>('places.json')
@@ -291,7 +291,7 @@ export async function createLead(leadData: { name: string, phone: string, vehicl
         revalidatePath('/admin');
         return { success: true, message: 'Lead created successfully' };
     } catch(e) {
-        console.error("Lead creation error:", e);
-        return { success: false, message: 'Failed to create lead due to a server error.' };
+        console.error("Lead save failed:", e);
+        return { success: false, message: 'Failed to save your details. Please try again.' };
     }
 }
