@@ -27,12 +27,12 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId) {
 
 
 // Functions to get services on demand
-export const getDb = () => {
+export const getDb = (): Firestore | null => {
     if (!firebaseConfig.apiKey || !firebaseConfig.projectId) return null;
     return getFirestore(app);
 }
 
-export const getAuthInstance = () => {
+export const getAuthInstance = (): Auth | null => {
     if (!firebaseConfig.apiKey || !firebaseConfig.projectId) return null;
     return getAuth(app);
 }
