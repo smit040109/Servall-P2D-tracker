@@ -13,9 +13,9 @@ export type Campaign = {
 };
 
 export type TimelineEvent = {
-  event: 'Form Submitted' | 'Offer Encashed' | 'Status Update' | 'Feedback Request Sent';
+  event: 'QR_SCANNED' | 'FORM_SUBMITTED' | 'Offer Encashed' | 'Status Update' | 'Feedback Request Sent';
   timestamp: string | FieldValue;
-  source: string; // e.g., 'System', 'Branch User', 'Admin User'
+  source: string; // e.g., 'System', 'Branch User', 'Admin User', 'customer'
   notes?: string;
 };
 
@@ -132,3 +132,5 @@ export type Staff = {
   totalHandled: number;
   totalEncashed: number;
 };
+
+    

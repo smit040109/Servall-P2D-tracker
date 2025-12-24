@@ -8,6 +8,7 @@ import type { Campaign, Place, CampaignSource, Discount, Franchise, Lead, Timeli
 import { db } from '@/firebase/firebase';
 import { addDoc, collection, serverTimestamp, updateDoc, doc, arrayUnion, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { format } from 'date-fns';
+import { z } from 'zod';
 
 // Helper function to read data from JSON files
 async function readData<T>(filename: string): Promise<T> {
@@ -224,6 +225,133 @@ export async function deleteBranch(branchId: string) {
 
 
 // --- Lead Actions ---
+
+const leadSchema = z.object({
+  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
+  phone: z.string().regex(/^\d{10}$/, { message: 'Please enter a valid 10-digit phone number.' }),
+  vehicle: z.string().min(2, { message: 'Vehicle model must be at least 2 characters.' }),
+  pincode: z.string().regex(/^\d{6}$/, { message: 'Please enter a valid 6-digit pincode.' }).optional().or(z.literal('')),
+  campaignId: z.string(),
+  sourceId: z.string(),
+});
+
+
+export async function createLeadAction(prevState: any, formData: FormData) {
+    if (!db) {
+        return { success: false, message: "Firestore DB not initialized" };
+    }
+
+    const leadData = Object.fromEntries(formData.entries());
+    const validatedFields = leadSchema.safeParse(leadData);
+
+    if (!validatedFields.success) {
+        return { 
+            success: false, 
+            message: "Validation failed.", 
+            errors: validatedFields.error.flatten().fieldErrors 
+        };
+    }
+    
+    const { pincode, ...restOfValidatedData } = validatedFields.data;
+
+    try {
+        // --- Start Scan/Lead Count Update ---
+        try {
+            const campaignSourcesPath = path.join(process.cwd(), 'src', 'lib', 'data', 'campaignSources.json');
+            const campaignSources: CampaignSource[] = JSON.parse(await fs.readFile(campaignSourcesPath, 'utf-8'));
+            
+            const sourceIndex = campaignSources.findIndex(cs => cs.id === validatedFields.data.sourceId);
+            
+            if (sourceIndex !== -1) {
+            campaignSources[sourceIndex].scans += 1;
+            campaignSources[sourceIndex].leads += 1;
+
+            await fs.writeFile(campaignSourcesPath, JSON.stringify(campaignSources, null, 2));
+            }
+        } catch (error) {
+            console.error("Failed to update scan/lead counts:", error);
+            // Non-critical, so we don't block lead creation
+        }
+        // --- End Scan/Lead Count Update ---
+
+        const places = await readData<Place[]>('places.json');
+        const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
+        
+        const campaignSource = campaignSources.find(cs => cs.id === validatedFields.data.sourceId);
+        const place = campaignSource ? places.find(p => p.id === campaignSource.sourceId) : undefined;
+
+        const batch = writeBatch(db);
+        const leadsRef = collection(db, "leads");
+        const newLeadRef = doc(leadsRef);
+
+        const newLead: any = {
+            ...restOfValidatedData,
+            status: "pending",
+            createdAt: serverTimestamp(),
+            timeline: [
+                { event: "QR_SCANNED", timestamp: serverTimestamp(), source: "customer" },
+                { event: "FORM_SUBMITTED", timestamp: serverTimestamp(), source: "customer" },
+            ],
+            category: place?.category || 'Unknown',
+            location: place?.name || 'Unknown',
+        };
+        
+        if (pincode) {
+            newLead.pincode = pincode;
+        }
+
+        batch.set(newLeadRef, newLead);
+
+        const customersRef = collection(db, "customers");
+        const q = query(customersRef, where("phone", "==", validatedFields.data.phone));
+        
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+            const newCustomerRef = doc(customersRef);
+            const newCustomer: Omit<Customer, 'id'> = {
+                name: validatedFields.data.name,
+                phone: validatedFields.data.phone,
+                firstVisitDate: serverTimestamp(),
+                lastVisitDate: serverTimestamp(),
+                totalVisits: 1,
+                totalEncashments: 0,
+                associatedLeadIds: [newLeadRef.id]
+            };
+            if (pincode) {
+                newCustomer.pincode = pincode;
+            }
+            batch.set(newCustomerRef, newCustomer);
+        } else {
+            const customerDoc = querySnapshot.docs[0];
+            const customerRef = doc(db, "customers", customerDoc.id);
+            const customerData = customerDoc.data() as Customer;
+
+            const updateData: any = {
+                lastVisitDate: serverTimestamp(),
+                totalVisits: (customerData.totalVisits || 0) + 1,
+                associatedLeadIds: arrayUnion(newLeadRef.id)
+            };
+
+            if (!customerData.pincode && pincode) {
+                updateData.pincode = pincode;
+            }
+
+            batch.update(customerRef, updateData);
+        }
+
+        await batch.commit();
+
+        revalidatePath('/admin'); // Revalidate admin pages to update stats
+        return { success: true, message: 'Your details have been submitted successfully!' };
+    
+    } catch (error: any) {
+        console.error("🔥 FIRESTORE ERROR:", error);
+        return { success: false, message: error.message || "Could not save your details. Please try again." };
+    }
+}
+
+
 export async function updateLeadStatus(
     leadId: string, 
     leadPhone: string, 
@@ -295,3 +423,5 @@ export async function updateLeadStatus(
     return { success: false, message: 'Failed to update lead.' };
   }
 }
+
+    

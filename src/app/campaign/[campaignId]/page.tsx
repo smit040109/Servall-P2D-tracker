@@ -19,7 +19,8 @@ import { Car, Loader2 } from 'lucide-react';
 import React from 'react';
 import Logo from '@/components/logo';
 import { useSearchParams } from 'next/navigation';
-import { createLead } from '@/lib/createLead';
+import { createLeadAction } from '@/lib/actions';
+import { useFormState } from 'react-dom';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -28,6 +29,12 @@ const formSchema = z.object({
   pincode: z.string().regex(/^\d{6}$/, { message: 'Please enter a valid 6-digit pincode.' }).optional().or(z.literal('')),
 });
 
+const initialState = {
+  message: '',
+  success: false,
+  errors: undefined,
+}
+
 // This page will be available at /campaign/[campaignId]
 export default function CampaignLeadCapturePage({ params: paramsPromise }: { params: Promise<{ campaignId: string }> }) {
   const params = React.use(paramsPromise);
@@ -35,7 +42,7 @@ export default function CampaignLeadCapturePage({ params: paramsPromise }: { par
   const sourceId = searchParams.get('sourceId');
 
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [state, formAction] = useFormState(createLeadAction, initialState);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -47,45 +54,41 @@ export default function CampaignLeadCapturePage({ params: paramsPromise }: { par
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true);
-    
-    if (!sourceId) {
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Missing tracking information from QR code."
-        });
-        setIsSubmitting(false);
-        return;
-    }
+  const { isSubmitting, isSubmitSuccessful } = form.formState;
 
-    try {
-      const leadData = { 
-        ...values, 
-        campaignId: params.campaignId, 
-        sourceId: sourceId
-      };
-      
-      await createLead(leadData);
-      
+  React.useEffect(() => {
+    if (isSubmitSuccessful && state.success) {
       toast({
           title: 'Success!',
-          description: 'Your details have been submitted. Our team will contact you shortly.',
+          description: state.message,
       });
       form.reset();
-
-    } catch (error: any) { 
-      console.error("🔥 FIRESTORE ERROR:", error);
+    }
+    if (!state.success && state.message) {
       toast({
           variant: "destructive",
           title: "Submission Failed",
-          description: error.message || "Could not save your details. Please try again.",
+          description: state.message,
       });
-    } finally {
-      setIsSubmitting(false);
     }
-}
+  }, [isSubmitSuccessful, state, form, toast]);
+
+
+  if (!sourceId) {
+      return (
+           <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+              <div className="absolute top-8 left-8">
+                <Logo />
+              </div>
+              <Card className="w-full max-w-md shadow-2xl">
+                <CardHeader className="text-center">
+                  <CardTitle>Error</CardTitle>
+                  <CardDescription>Missing tracking information from QR code. Please scan the QR code again.</CardDescription>
+                </CardHeader>
+              </Card>
+           </main>
+      )
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
@@ -102,7 +105,9 @@ export default function CampaignLeadCapturePage({ params: paramsPromise }: { par
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form action={formAction} className="space-y-6">
+               <input type="hidden" name="campaignId" value={params.campaignId} />
+               <input type="hidden" name="sourceId" value={sourceId} />
               <FormField
                 control={form.control}
                 name="name"
@@ -170,3 +175,4 @@ export default function CampaignLeadCapturePage({ params: paramsPromise }: { par
     </main>
   );
 }
+    
