@@ -1,5 +1,4 @@
 
-import { CampaignSourcesTable } from "@/components/admin/campaign-sources-table";
 import { getCampaignById, getCampaignSources, getPlaces } from "@/lib/data";
 import { notFound } from "next/navigation";
 import {
@@ -13,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CampaignSourcesTableDynamic } from "@/components/admin/campaign-sources-table-dynamic";
 
 export default async function CampaignDetailsPage({ params }: { params: { campaignId: string } }) {
     const campaign = await getCampaignById(params.campaignId);
@@ -45,7 +45,7 @@ export default async function CampaignDetailsPage({ params }: { params: { campai
                 </CardHeader>
             </Card>
             
-            <CampaignSourcesTable 
+            <CampaignSourcesTableDynamic
                 campaignSources={campaignSources}
                 allPlaces={allPlaces}
                 campaign={campaign}
