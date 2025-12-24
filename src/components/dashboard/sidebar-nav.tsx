@@ -1,9 +1,10 @@
+
 "use client";
 
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type LucideIcon, LayoutDashboard, QrCode, Building, Tag, MapPin, AppWindow } from "lucide-react";
+import { type LucideIcon, LayoutDashboard, QrCode, Building, Tag, MapPin } from "lucide-react";
 
 type NavItem = {
   href: string;
@@ -16,7 +17,7 @@ const navItemsByRole: Record<string, NavItem[]> = {
   admin: [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/campaigns", label: "Campaigns", icon: QrCode, matcher: /^\/admin\/campaigns(\/.*)?$/ },
-    { href: "/admin/sources", label: "Sources", icon: AppWindow },
+    { href: "/admin/places", label: "Places", icon: MapPin },
     { href: "/admin/branches", label: "Branches", icon: Building },
     { href: "/admin/discounts", label: "Discounts", icon: Tag },
   ],

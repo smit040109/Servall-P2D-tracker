@@ -1,3 +1,4 @@
+
 export type Campaign = {
   id: string;
   name: string;
@@ -13,7 +14,7 @@ export type Lead = {
   vehicle: string;
   status: 'pending' | 'encashed' | 'rejected';
   campaignId: string;
-  sourceId: string;
+  sourceId: string; // This will now refer to a Place's ID
   createdAt: string;
 };
 
@@ -25,15 +26,16 @@ export type Franchise = {
   successfullyEncashed: number;
 };
 
-export type Source = {
+export type Place = {
   id: string;
   name: string;
+  category: string;
 };
 
 export type CampaignSource = {
     id: string;
     campaignId: string;
-    sourceId: string;
+    sourceId: string; // This will now be placeId
     scans: number;
     leads: number;
     encashed: number;

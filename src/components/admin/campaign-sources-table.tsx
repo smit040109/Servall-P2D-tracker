@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -34,15 +35,16 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { QrCode, PlusCircle, Loader2, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
-import type { CampaignSource, Source, Campaign } from "@/lib/types"
+import type { CampaignSource, Place, Campaign } from "@/lib/types"
+import { Badge } from "../ui/badge"
 
 type CampaignSourcesTableProps = {
     campaignSources: CampaignSource[],
-    allSources: Source[],
+    allPlaces: Place[],
     campaign: Campaign
 }
 
-export function CampaignSourcesTable({ campaignSources, allSources, campaign }: CampaignSourcesTableProps) {
+export function CampaignSourcesTable({ campaignSources, allPlaces, campaign }: CampaignSourcesTableProps) {
   const [open, setOpen] = React.useState(false);
   const [isCreating, setIsCreating] = React.useState(false);
 
@@ -61,7 +63,7 @@ export function CampaignSourcesTable({ campaignSources, allSources, campaign }: 
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
-  const getSourceName = (sourceId: string) => allSources.find(s => s.id === sourceId)?.name || "Unknown Source";
+  const getPlaceDetails = (placeId: string) => allPlaces.find(p => p.id === placeId);
 
   const getQrCodeUrl = (campaignId: string, sourceId: string) => {
     // In a real app, this should be an absolute URL. For prototyping,
@@ -76,39 +78,39 @@ export function CampaignSourcesTable({ campaignSources, allSources, campaign }: 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Offline Sources</CardTitle>
+        <CardTitle>Offline Places</CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1">
               <PlusCircle className="h-4 w-4" />
-              Add Source
+              Add Place
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Add Source to Campaign</DialogTitle>
+              <DialogTitle>Add Place to Campaign</DialogTitle>
               <DialogDescription>
-                Select a source to generate a unique QR code for this campaign.
+                Select a place to generate a unique QR code for this campaign.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleAddSource} className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="source" className="text-right">
-                  Source
+                  Place
                 </Label>
                 <Select required name="sourceId">
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select a source" />
+                    <SelectValue placeholder="Select a place" />
                   </SelectTrigger>
                   <SelectContent>
-                    {allSources.map(source => (
-                      <SelectItem key={source.id} value={source.id}>{source.name}</SelectItem>
+                    {allPlaces.map(place => (
+                      <SelectItem key={place.id} value={place.id}>{place.name} ({place.category})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
                <Button type="submit" disabled={isCreating}>
-                 {isCreating ? <Loader2 className="animate-spin"/> : "Add Source & Get QR"}
+                 {isCreating ? <Loader2 className="animate-spin"/> : "Add Place & Get QR"}
                </Button>
             </form>
           </DialogContent>
@@ -118,7 +120,8 @@ export function CampaignSourcesTable({ campaignSources, allSources, campaign }: 
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Source Name</TableHead>
+              <TableHead>Place Name</TableHead>
+              <TableHead>Category</TableHead>
               <TableHead className="text-right">Scans</TableHead>
               <TableHead className="text-right">Leads</TableHead>
               <TableHead className="text-right">Encashed</TableHead>
@@ -126,9 +129,12 @@ export function CampaignSourcesTable({ campaignSources, allSources, campaign }: 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {campaignSources.map((cs) => (
+            {campaignSources.map((cs) => {
+              const place = getPlaceDetails(cs.sourceId);
+              return (
               <TableRow key={cs.id}>
-                <TableCell className="font-medium">{getSourceName(cs.sourceId)}</TableCell>
+                <TableCell className="font-medium">{place?.name || 'Unknown'}</TableCell>
+                <TableCell><Badge variant="outline">{place?.category || 'N/A'}</Badge></TableCell>
                 <TableCell className="text-right">{cs.scans.toLocaleString()}</TableCell>
                 <TableCell className="text-right">{cs.leads.toLocaleString()}</TableCell>
                 <TableCell className="text-right">{cs.encashed.toLocaleString()}</TableCell>
@@ -142,7 +148,7 @@ export function CampaignSourcesTable({ campaignSources, allSources, campaign }: 
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>{campaign.name} at {getSourceName(cs.sourceId)}</DialogTitle>
+                          <DialogTitle>{campaign.name} at {place?.name}</DialogTitle>
                         </DialogHeader>
                         <div className="p-4 flex items-center justify-center bg-white rounded-md">
                            <Image 
@@ -152,7 +158,7 @@ export function CampaignSourcesTable({ campaignSources, allSources, campaign }: 
                              alt={`QR Code for ${campaign.name}`}
                            />
                         </div>
-                        <p className="text-center text-sm text-muted-foreground">Scan this code to track leads from {getSourceName(cs.sourceId)}.</p>
+                        <p className="text-center text-sm text-muted-foreground">Scan this code to track leads from {place?.name}.</p>
                       </DialogContent>
                     </Dialog>
                     <AlertDialog>
@@ -165,7 +171,7 @@ export function CampaignSourcesTable({ campaignSources, allSources, campaign }: 
                         <AlertDialogHeader>
                           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete this source from the campaign.
+                            This action cannot be undone. This will permanently delete this place from the campaign.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -179,7 +185,7 @@ export function CampaignSourcesTable({ campaignSources, allSources, campaign }: 
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+            )})}
           </TableBody>
         </Table>
       </CardContent>

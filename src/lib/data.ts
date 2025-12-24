@@ -1,4 +1,5 @@
-import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Source, CampaignSource } from './types';
+
+import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place, CampaignSource } from './types';
 
 const discounts: Discount[] = [
   { id: 'disc_1', code: 'DIWALI20', description: '20% off on all services', type: 'percentage', value: 20, status: 'active' },
@@ -6,16 +7,15 @@ const discounts: Discount[] = [
   { id: 'disc_3', code: 'NEWYEAR15', description: '15% off on ceramic coating', type: 'percentage', value: 15, status: 'inactive' },
 ];
 
-const sources: Source[] = [
-    { id: 'source_1', name: 'Salon' },
-    { id: 'source_2', name: 'Gym' },
-    { id: 'source_3', name: 'Local Shop' },
-    { id: 'source_4', name: 'Dance Class' },
-    { id: 'source_5', name: 'Theatre' },
-    { id: 'source_6', name: 'Apartment' },
-    { id: 'source_7', name: 'Mall' },
-    { id: 'source_8', name: 'Parking Plot' },
-    { id: 'source_9', name: 'Famous Place' },
+const places: Place[] = [
+    { id: 'place_1', name: 'ABC Salon', category: 'Salon' },
+    { id: 'place_2', name: 'XYZ Salon', category: 'Salon' },
+    { id: 'place_3', name: 'Gold\'s Gym', category: 'Gym' },
+    { id: 'place_4', name: 'Local Kirana Store', category: 'Local Shop' },
+    { id: 'place_5', name: 'Sangeet Dance Academy', category: 'Dance Class' },
+    { id: 'place_6', name: 'PVR Cinemas', category: 'Theatre' },
+    { id: 'place_7', name: 'Prestige Apartments', category: 'Apartment' },
+    { id: 'place_8', name: 'Phoenix Mall', category: 'Mall' },
 ];
 
 
@@ -26,16 +26,16 @@ const campaigns: Campaign[] = [
 ];
 
 const campaignSources: CampaignSource[] = [
-    {id: 'cs_1', campaignId: 'cam_1', sourceId: 'source_1', scans: 150, leads: 100, encashed: 50},
-    {id: 'cs_2', campaignId: 'cam_1', sourceId: 'source_2', scans: 200, leads: 150, encashed: 80},
-    {id: 'cs_3', campaignId: 'cam_2', sourceId: 'source_7', scans: 500, leads: 300, encashed: 150},
+    {id: 'cs_1', campaignId: 'cam_1', sourceId: 'place_1', scans: 150, leads: 100, encashed: 50},
+    {id: 'cs_2', campaignId: 'cam_1', sourceId: 'place_3', scans: 200, leads: 150, encashed: 80},
+    {id: 'cs_3', campaignId: 'cam_2', sourceId: 'place_8', scans: 500, leads: 300, encashed: 150},
 ]
 
 const leads: Lead[] = [
-  { id: 'lead_1', name: 'Ravi Kumar', phone: '9876543210', vehicle: 'Maruti Swift', status: 'pending', campaignId: 'cam_1', sourceId: 'source_1', createdAt: '2023-10-15T10:00:00Z' },
-  { id: 'lead_2', name: 'Sunita Sharma', phone: '9876543211', vehicle: 'Hyundai i20', status: 'encashed', campaignId: 'cam_2', sourceId: 'source_7', createdAt: '2023-10-16T11:30:00Z' },
-  { id: 'lead_3', name: 'Amit Patel', phone: '9876543212', vehicle: 'Honda City', status: 'pending', campaignId: 'cam_1', sourceId: 'source_2', createdAt: '2023-10-17T14:00:00Z' },
-  { id: 'lead_4', name: 'Priya Singh', phone: '9876543213', vehicle: 'Tata Nexon', status: 'rejected', campaignId: 'cam_3', sourceId: 'source_1', createdAt: '2023-10-18T16:45:00Z' },
+  { id: 'lead_1', name: 'Ravi Kumar', phone: '9876543210', vehicle: 'Maruti Swift', status: 'pending', campaignId: 'cam_1', sourceId: 'place_1', createdAt: '2023-10-15T10:00:00Z' },
+  { id: 'lead_2', name: 'Sunita Sharma', phone: '9876543211', vehicle: 'Hyundai i20', status: 'encashed', campaignId: 'cam_2', sourceId: 'place_8', createdAt: '2023-10-16T11:30:00Z' },
+  { id: 'lead_3', name: 'Amit Patel', phone: '9876543212', vehicle: 'Honda City', status: 'pending', campaignId: 'cam_1', sourceId: 'place_3', createdAt: '2023-10-17T14:00:00Z' },
+  { id: 'lead_4', name: 'Priya Singh', phone: '9876543213', vehicle: 'Tata Nexon', status: 'rejected', campaignId: 'cam_3', sourceId: 'place_1', createdAt: '2023-10-18T16:45:00Z' },
 ];
 
 const franchises: Franchise[] = [
@@ -105,9 +105,9 @@ export async function getDiscounts(): Promise<Discount[]> {
     return discounts;
 }
 
-export async function getSources(): Promise<Source[]> {
+export async function getPlaces(): Promise<Place[]> {
     await new Promise(resolve => setTimeout(resolve, 500));
-    return sources;
+    return places;
 }
 
 export async function getCampaignSources(campaignId: string): Promise<CampaignSource[]> {

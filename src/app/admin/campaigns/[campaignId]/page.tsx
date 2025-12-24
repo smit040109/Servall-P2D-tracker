@@ -1,5 +1,6 @@
+
 import { CampaignSourcesTable } from "@/components/admin/campaign-sources-table";
-import { getCampaignById, getCampaignSources, getSources } from "@/lib/data";
+import { getCampaignById, getCampaignSources, getPlaces } from "@/lib/data";
 import { notFound } from "next/navigation";
 import {
   Card,
@@ -20,9 +21,9 @@ export default async function CampaignDetailsPage({ params }: { params: { campai
         notFound();
     }
 
-    const [campaignSources, allSources] = await Promise.all([
+    const [campaignSources, allPlaces] = await Promise.all([
         getCampaignSources(campaign.id),
-        getSources()
+        getPlaces()
     ]);
     
     return (
@@ -46,7 +47,7 @@ export default async function CampaignDetailsPage({ params }: { params: { campai
             
             <CampaignSourcesTable 
                 campaignSources={campaignSources}
-                allSources={allSources}
+                allPlaces={allPlaces}
                 campaign={campaign}
             />
         </div>
