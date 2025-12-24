@@ -19,7 +19,7 @@ import { Car, Loader2 } from 'lucide-react';
 import React from 'react';
 import Logo from '@/components/logo';
 import { useSearchParams } from 'next/navigation';
-import { createLead } from '@/lib/data';
+import { createLead } from '@/lib/actions';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),

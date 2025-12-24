@@ -3,5 +3,15 @@
     "id": "place_1766575688918",
     "name": "smit",
     "category": "Local Shop"
+  },
+  {
+    "id": "place_1766576439670",
+    "name": "dream gym",
+    "category": "Gym"
+  },
+  {
+    "id": "place_1766576449413",
+    "name": "Mihir Ladhawala",
+    "category": "Apartment"
   }
 ]

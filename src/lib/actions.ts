@@ -241,3 +241,47 @@ export async function updateLeadStatus(leadId: string, status: Lead['status']) {
     return { success: false, message: 'Failed to update lead status.' };
   }
 }
+
+export async function createLead(leadData: Omit<Lead, 'id' | 'createdAt' | 'status' | 'category' | 'location'> & { sourceId: string }) {
+    try {
+        const [leads, campaignSources, places] = await Promise.all([
+            readData<Lead[]>('leads.json'),
+            readData<CampaignSource[]>('campaignSources.json'),
+            readData<Place[]>('places.json')
+        ]);
+        
+        const source = campaignSources.find(cs => cs.id === leadData.sourceId);
+        if (!source) {
+            return { success: false, message: 'Invalid QR code. Source not found.' };
+        }
+        
+        const place = places.find(p => p.id === source.sourceId);
+        if (!place) {
+            return { success: false, message: 'Invalid place data associated with QR code.' };
+        }
+
+        const newLead: Lead = {
+            id: `lead_${Date.now()}`,
+            createdAt: new Date().toISOString(),
+            status: 'pending',
+            ...leadData,
+            category: place.category,
+            location: place.name
+        };
+        leads.push(newLead);
+        
+        // Increment scan and lead count for the specific campaign source
+        source.scans++; 
+        source.leads++;
+        
+        await Promise.all([
+            writeData('leads.json', leads),
+            writeData('campaignSources.json', campaignSources)
+        ]);
+
+        return { success: true, message: 'Lead created successfully' };
+    } catch(e) {
+        console.error("Lead creation error:", e);
+        return { success: false, message: 'Failed to create lead due to a server error.' };
+    }
+}
