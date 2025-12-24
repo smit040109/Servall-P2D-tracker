@@ -37,6 +37,7 @@ export async function createLead(leadData: any) {
     const newCustomerRef = doc(customersRef);
     const newCustomer: Omit<Customer, 'id'> = {
         phone: leadData.phone,
+        pincode: leadData.pincode,
         firstVisitDate: serverTimestamp(),
         lastVisitDate: serverTimestamp(),
         totalVisits: 1,
@@ -50,11 +51,18 @@ export async function createLead(leadData: any) {
     const customerRef = doc(db, "customers", customerDoc.id);
     const customerData = customerDoc.data() as Customer;
 
-    batch.update(customerRef, {
+    const updateData: any = {
         lastVisitDate: serverTimestamp(),
         totalVisits: customerData.totalVisits + 1,
         associatedLeadIds: [...customerData.associatedLeadIds, newLeadRef.id]
-    });
+    };
+
+    // Only update pincode if it's not already set
+    if (!customerData.pincode && leadData.pincode) {
+        updateData.pincode = leadData.pincode;
+    }
+
+    batch.update(customerRef, updateData);
   }
 
   // 3. Commit all operations

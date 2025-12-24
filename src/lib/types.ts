@@ -20,6 +20,7 @@ export type Lead = {
   name: string;
   phone: string;
   vehicle: string;
+  pincode?: string;
   status: 'pending' | 'encashed' | 'rejected';
   campaignId: string;
   sourceId: string; // This is the ID of the CampaignSource document
@@ -32,6 +33,7 @@ export type Lead = {
 export type Customer = {
     id: string; // Firestore document ID
     phone: string; // The unique identifier
+    pincode?: string;
     firstVisitDate: string | FieldValue;
     lastVisitDate: string | FieldValue;
     totalVisits: number; // a.k.a. total leads
@@ -101,6 +103,11 @@ export type LocationLead = {
   category: string;
   leads: number;
 };
+
+export type PincodeLead = {
+  pincode: string;
+  leads: number;
+}
 
 export type PlaceWithStats = Place & {
   totalLeads: number;

@@ -25,6 +25,7 @@ const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   phone: z.string().regex(/^\d{10}$/, { message: 'Please enter a valid 10-digit phone number.' }),
   vehicle: z.string().min(2, { message: 'Vehicle model must be at least 2 characters.' }),
+  pincode: z.string().regex(/^\d{6}$/, { message: 'Please enter a valid 6-digit pincode.' }).optional().or(z.literal('')),
 });
 
 // This page will be available at /campaign/[campaignId]
@@ -42,6 +43,7 @@ export default function CampaignLeadCapturePage({ params: paramsPromise }: { par
       name: '',
       phone: '',
       vehicle: '',
+      pincode: '',
     },
   });
 
@@ -127,19 +129,34 @@ export default function CampaignLeadCapturePage({ params: paramsPromise }: { par
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="vehicle"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Vehicle Model</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Toyota Camry" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="vehicle"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Vehicle Model</FormLabel>
+                        <FormControl>
+                        <Input placeholder="e.g., Toyota Camry" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="pincode"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Pincode</FormLabel>
+                        <FormControl>
+                        <Input placeholder="e.g., 560034" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+              </div>
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? <Loader2 className="animate-spin" /> : 'Submit & Get Offer'}
               </Button>

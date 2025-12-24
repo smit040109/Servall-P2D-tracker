@@ -1,5 +1,4 @@
-
-import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place, CampaignSource, CategoryLead, LocationLead, PlaceWithStats, TimelineEvent, Customer } from './types';
+import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place, CampaignSource, CategoryLead, LocationLead, PlaceWithStats, TimelineEvent, Customer, PincodeLead } from './types';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { db } from '@/firebase/firebase';
@@ -67,6 +66,7 @@ function convertFirestoreDocToLead(doc: DocumentData): Lead {
         name: data.name,
         phone: data.phone,
         vehicle: data.vehicle,
+        pincode: data.pincode,
         status: data.status,
         campaignId: data.campaignId,
         sourceId: data.sourceId,
@@ -180,6 +180,17 @@ export async function getLocationLeads(): Promise<LocationLead[]> {
         }
     });
     return Object.entries(locationCounts).map(([location, data]) => ({ location, leads: data.leads, category: data.category }));
+}
+
+export async function getPincodeLeads(): Promise<PincodeLead[]> {
+    const leads = await getAllLeads(); // Reading from Firestore
+    const pincodeCounts: Record<string, number> = {};
+    leads.forEach(lead => {
+        if (lead.pincode) {
+            pincodeCounts[lead.pincode] = (pincodeCounts[lead.pincode] || 0) + 1;
+        }
+    });
+    return Object.entries(pincodeCounts).map(([pincode, leads]) => ({ pincode, leads }));
 }
 
 export async function getBranchAnalytics(branchId: string): Promise<AnalyticsData> {
