@@ -1,11 +1,11 @@
 
 [
-    { "id": "place_1", "name": "ABC Salon", "category": "Salon" },
-    { "id": "place_2", "name": "XYZ Salon", "category": "Salon" },
-    { "id": "place_3", "name": "Gold's Gym", "category": "Gym" },
-    { "id": "place_4", "name": "Local Kirana Store", "category": "Local Shop" },
-    { "id": "place_5", "name": "Sangeet Dance Academy", "category": "Dance Class" },
-    { "id": "place_6", "name": "PVR Cinemas", "category": "Theatre" },
-    { "id": "place_7", "name": "Prestige Apartments", "category": "Apartment" },
-    { "id": "place_8", "name": "Phoenix Mall", "category": "Mall" }
+    { "id": "place_1", "name": "ABC Salon", "category": "Salon", "monthlyCost": 1500, "placementType": "Poster", "startDate": "2023-10-01", "endDate": "2023-12-31" },
+    { "id": "place_2", "name": "XYZ Salon", "category": "Salon", "monthlyCost": 1200, "placementType": "Counter", "startDate": "2023-10-01", "endDate": "2023-12-31" },
+    { "id": "place_3", "name": "Gold's Gym", "category": "Gym", "monthlyCost": 3000, "placementType": "Banner", "startDate": "2023-11-01", "endDate": "2024-01-31" },
+    { "id": "place_4", "name": "Local Kirana Store", "category": "Local Shop", "monthlyCost": 500, "placementType": "Poster", "startDate": "2023-09-01", "endDate": "2023-11-30" },
+    { "id": "place_5", "name": "Sangeet Dance Academy", "category": "Dance Class", "monthlyCost": 1000, "placementType": "Standee", "startDate": "2023-10-15", "endDate": "2024-01-15" },
+    { "id": "place_6", "name": "PVR Cinemas", "category": "Theatre", "monthlyCost": 5000, "placementType": "Banner", "startDate": "2023-12-01", "endDate": "2024-02-29" },
+    { "id": "place_7", "name": "Prestige Apartments", "category": "Apartment", "monthlyCost": 2500, "placementType": "Standee", "startDate": "2023-10-01", "endDate": "2023-12-31" },
+    { "id": "place_8", "name": "Phoenix Mall", "category": "Mall", "monthlyCost": 10000, "placementType": "Banner", "startDate": "2023-10-01", "endDate": "2024-03-31" }
 ]

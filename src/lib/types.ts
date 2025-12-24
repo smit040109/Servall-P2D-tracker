@@ -33,6 +33,10 @@ export type Place = {
   id: string;
   name: string;
   category: string;
+  monthlyCost: number;
+  placementType: 'Poster' | 'Standee' | 'Counter' | 'Banner' | 'Custom';
+  startDate: string;
+  endDate: string;
 };
 
 export type CampaignSource = {
@@ -74,3 +78,10 @@ export type LocationLead = {
   category: string;
   leads: number;
 };
+
+export type PlaceWithStats = Place & {
+  totalLeads: number;
+  totalEncashed: number;
+  costPerLead: number;
+  costPerEncashment: number;
+}

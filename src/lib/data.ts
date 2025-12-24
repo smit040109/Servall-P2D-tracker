@@ -1,5 +1,5 @@
 
-import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place, CampaignSource, CategoryLead, LocationLead } from './types';
+import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place, CampaignSource, CategoryLead, LocationLead, PlaceWithStats } from './types';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { db } from '@/firebase/firebase';
@@ -195,6 +195,53 @@ export async function getDiscounts(): Promise<Discount[]> {
 
 export async function getPlaces(): Promise<Place[]> {
     return await readData<Place[]>('places.json');
+}
+
+export async function getPlacesWithStats(): Promise<PlaceWithStats[]> {
+    const [places, campaignSources, leads] = await Promise.all([
+        getPlaces(),
+        readData<CampaignSource[]>('campaignSources.json'),
+        getAllLeads()
+    ]);
+
+    const placeStats = new Map<string, { totalLeads: number; totalEncashed: number }>();
+
+    // Initialize stats for each place
+    for (const place of places) {
+        placeStats.set(place.id, { totalLeads: 0, totalEncashed: 0 });
+    }
+
+    // Map sourceId (from CampaignSource) to placeId
+    const sourceIdToPlaceId = new Map<string, string>();
+    for (const cs of campaignSources) {
+        sourceIdToPlaceId.set(cs.id, cs.sourceId);
+    }
+    
+    // Aggregate leads and encashed counts
+    for (const lead of leads) {
+        const placeId = sourceIdToPlaceId.get(lead.sourceId);
+        if (placeId && placeStats.has(placeId)) {
+            const stats = placeStats.get(placeId)!;
+            stats.totalLeads++;
+            if (lead.status === 'encashed') {
+                stats.totalEncashed++;
+            }
+        }
+    }
+    
+    // Combine places with their stats and calculate ROI metrics
+    return places.map(place => {
+        const stats = placeStats.get(place.id) || { totalLeads: 0, totalEncashed: 0 };
+        const costPerLead = stats.totalLeads > 0 ? place.monthlyCost / stats.totalLeads : 0;
+        const costPerEncashment = stats.totalEncashed > 0 ? place.monthlyCost / stats.totalEncashed : 0;
+        
+        return {
+            ...place,
+            ...stats,
+            costPerLead,
+            costPerEncashment,
+        };
+    });
 }
 
 export async function getCampaignSources(campaignId: string): Promise<CampaignSource[]> {

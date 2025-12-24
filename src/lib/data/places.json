@@ -1,17 +1,30 @@
+
 [
   {
     "id": "place_1766575688918",
     "name": "smit",
-    "category": "Local Shop"
+    "category": "Local Shop",
+    "monthlyCost": 100,
+    "placementType": "Poster",
+    "startDate": "2024-01-01",
+    "endDate": "2024-12-31"
   },
   {
     "id": "place_1766576439670",
     "name": "dream gym",
-    "category": "Gym"
+    "category": "Gym",
+    "monthlyCost": 1000,
+    "placementType": "Banner",
+    "startDate": "2024-01-01",
+    "endDate": "2024-12-31"
   },
   {
     "id": "place_1766576449413",
     "name": "Mihir Ladhawala",
-    "category": "Apartment"
+    "category": "Apartment",
+    "monthlyCost": 500,
+    "placementType": "Standee",
+    "startDate": "2024-01-01",
+    "endDate": "2024-12-31"
   }
 ]

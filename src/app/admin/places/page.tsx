@@ -1,9 +1,9 @@
 
 import { PlacesTable } from "@/components/admin/places-table";
-import { getPlaces } from "@/lib/data";
+import { getPlacesWithStats } from "@/lib/data";
 
 export default async function PlacesPage() {
-    const places = await getPlaces();
+    const places = await getPlacesWithStats();
     return (
         <div>
             <PlacesTable places={places} />

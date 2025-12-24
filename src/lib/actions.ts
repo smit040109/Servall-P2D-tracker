@@ -7,6 +7,7 @@ import path from 'path';
 import type { Campaign, Place, CampaignSource, Discount, Franchise, Lead } from './types';
 import { db } from '@/firebase/firebase';
 import { addDoc, collection, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
+import { format } from 'date-fns';
 
 // Helper function to read data from JSON files
 async function readData<T>(filename: string): Promise<T> {
@@ -92,12 +93,17 @@ export async function createPlace(formData: FormData) {
       id: `place_${Date.now()}`,
       name: formData.get('name') as string,
       category: formData.get('category') as string,
+      monthlyCost: Number(formData.get('monthlyCost')),
+      placementType: formData.get('placementType') as Place['placementType'],
+      startDate: format(new Date(formData.get('startDate') as string), 'yyyy-MM-dd'),
+      endDate: format(new Date(formData.get('endDate') as string), 'yyyy-MM-dd'),
     };
     places.push(newPlace);
     await writeData('places.json', places);
     revalidatePath('/admin/places');
     return { success: true, message: 'Place created successfully.' };
   } catch (error) {
+    console.error(error);
     return { success: false, message: 'Failed to create place.' };
   }
 }
@@ -203,7 +209,7 @@ export async function deleteBranch(branchId: string) {
     try {
         let branches = await readData<Franchise[]>('franchises.json');
         branches = branches.filter((b) => b.id !== branchId);
-        await writeData('franchises.json', branches);
+        await writeData('branches.json', branches);
         revalidatePath('/admin/branches');
         return { success: true, message: 'Branch deleted successfully.' };
     } catch (error) {
