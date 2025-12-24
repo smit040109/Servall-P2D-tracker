@@ -35,6 +35,7 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
   const searchParams = useSearchParams();
   const sourceId = searchParams.get('sourceId');
   const { toast } = useToast();
+  const { campaignId } = params;
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -62,14 +63,14 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
     
     try {
       // Fetch server-side context using the server action
-      const context = await getLeadCreationContext(params.campaignId, sourceId);
+      const context = await getLeadCreationContext(campaignId, sourceId);
       if (!context.success) {
         throw new Error(context.error);
       }
       
       const leadData = {
           ...values,
-          campaignId: params.campaignId,
+          campaignId: campaignId,
           sourceId: sourceId,
           placeId: context.placeId,
           branchId: context.branchId,
