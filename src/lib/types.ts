@@ -1,12 +1,8 @@
 export type Campaign = {
   id: string;
   name: string;
-  branch: string;
   city: string;
-  qrCodeUrl: string;
-  scans: number;
-  leads: number;
-  encashed: number;
+  branchId: string;
   discountId: string;
 };
 
@@ -17,6 +13,7 @@ export type Lead = {
   vehicle: string;
   status: 'pending' | 'encashed' | 'rejected';
   campaignId: string;
+  sourceId: string;
   createdAt: string;
 };
 
@@ -28,10 +25,19 @@ export type Franchise = {
   successfullyEncashed: number;
 };
 
-export type Place = {
+export type Source = {
   id: string;
   name: string;
 };
+
+export type CampaignSource = {
+    id: string;
+    campaignId: string;
+    sourceId: string;
+    scans: number;
+    leads: number;
+    encashed: number;
+}
 
 export type AnalyticsData = {
   totalScans: number;

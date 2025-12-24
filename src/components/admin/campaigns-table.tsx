@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import Image from "next/image"
+import Link from "next/link"
 import {
   Table,
   TableBody,
@@ -33,19 +33,37 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { QrCode, PlusCircle, Loader2, Trash2 } from "lucide-react"
+import { PlusCircle, Loader2, Trash2, ArrowRight } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
-import type { Campaign } from "@/lib/types"
-import { getDiscounts } from "@/lib/data"
+import type { Campaign, Franchise, Discount } from "@/lib/types"
 
-export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
+type CampaignsTableProps = {
+  campaigns: Campaign[],
+  branches: Franchise[],
+  discounts: Discount[]
+}
+
+export function CampaignsTable({ campaigns, branches, discounts }: CampaignsTableProps) {
   const [open, setOpen] = React.useState(false);
   const [isCreating, setIsCreating] = React.useState(false);
-  const [discounts, setDiscounts] = React.useState<Awaited<ReturnType<typeof getDiscounts>>>([]);
-
+  
+  const [campaignStats, setCampaignStats] = React.useState<Record<string, { scans: number, leads: number, encashed: number }>>({});
+  
+  // This is a temporary solution to show stats. In a real app, this would be part of the initial data fetch.
   React.useEffect(() => {
-    getDiscounts().then(setDiscounts);
-  }, [])
+    async function fetchStats() {
+        const stats: Record<string, { scans: number, leads: number, encashed: number }> = {};
+        for (const campaign of campaigns) {
+            const response = await fetch(`/api/campaign-stats?id=${campaign.id}`);
+            if (response.ok) {
+                stats[campaign.id] = await response.json();
+            }
+        }
+        setCampaignStats(stats);
+    }
+    fetchStats();
+  }, [campaigns]);
+
 
   async function handleCreateCampaign(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,15 +80,9 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
-  const getQrCodeUrl = (campaignUrl: string) => {
-    // In a real app, this should be an absolute URL. For prototyping,
-    // we'll use the current window location if available.
-    const siteUrl = typeof window !== 'undefined' 
-      ? window.location.origin 
-      : 'https://your-app-domain.com'; // Fallback for server rendering
-    const fullUrl = `${siteUrl}${campaignUrl}`;
-    return `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(fullUrl)}&size=256x256&bgcolor=ffffff`;
-  }
+  const getBranchName = (branchId: string) => branches.find(b => b.id === branchId)?.name || 'N/A';
+  const getDiscountCode = (discountId: string) => discounts.find(d => d.id === discountId)?.code || 'N/A';
+  const getStats = (campaignId: string) => campaignStats[campaignId] || { scans: 0, leads: 0, encashed: 0 };
 
   return (
     <Card>
@@ -101,7 +113,7 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
                 <Label htmlFor="city" className="text-right">
                   City
                 </Label>
-                <Select required>
+                <Select required name="city">
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select a city" />
                   </SelectTrigger>
@@ -116,14 +128,14 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
                 <Label htmlFor="branch" className="text-right">
                   Branch
                 </Label>
-                <Select required>
+                <Select required name="branchId">
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select a branch" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="koramangala">Koramangala</SelectItem>
-                    <SelectItem value="indiranagar">Indiranagar</SelectItem>
-                    <SelectItem value="hsr">HSR Layout</SelectItem>
+                    {branches.map(branch => (
+                      <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -131,7 +143,7 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
                 <Label htmlFor="discount" className="text-right">
                   Discount
                 </Label>
-                <Select required>
+                <Select required name="discountId">
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select a discount" />
                   </SelectTrigger>
@@ -168,34 +180,18 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
               <TableRow key={campaign.id}>
                 <TableCell className="font-medium">{campaign.name}</TableCell>
                 <TableCell>{campaign.city}</TableCell>
-                <TableCell>{campaign.branch}</TableCell>
-                <TableCell>{campaign.discountId}</TableCell>
-                <TableCell className="text-right">{campaign.scans.toLocaleString()}</TableCell>
-                <TableCell className="text-right">{campaign.leads.toLocaleString()}</TableCell>
-                <TableCell className="text-right">{campaign.encashed.toLocaleString()}</TableCell>
+                <TableCell>{getBranchName(campaign.branchId)}</TableCell>
+                <TableCell>{getDiscountCode(campaign.discountId)}</TableCell>
+                <TableCell className="text-right">{getStats(campaign.id).scans.toLocaleString()}</TableCell>
+                <TableCell className="text-right">{getStats(campaign.id).leads.toLocaleString()}</TableCell>
+                <TableCell className="text-right">{getStats(campaign.id).encashed.toLocaleString()}</TableCell>
                 <TableCell className="text-center">
                   <div className="flex justify-center items-center gap-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="icon">
-                          <QrCode className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>{campaign.name} - QR Code</DialogTitle>
-                        </DialogHeader>
-                        <div className="p-4 flex items-center justify-center bg-white rounded-md">
-                           <Image 
-                             src={getQrCodeUrl(campaign.qrCodeUrl)}
-                             width={256}
-                             height={256}
-                             alt={`QR Code for ${campaign.name}`}
-                           />
-                        </div>
-                        <p className="text-center text-sm text-muted-foreground">Scan this code to capture leads for the {campaign.branch} branch.</p>
-                      </DialogContent>
-                    </Dialog>
+                    <Link href={`/admin/campaigns/${campaign.id}`}>
+                      <Button variant="outline" size="sm" className="gap-1">
+                        View Sources <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </Link>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" size="icon">

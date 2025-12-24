@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Car, Loader2 } from 'lucide-react';
 import React from 'react';
 import Logo from '@/components/logo';
+import { useSearchParams } from 'next/navigation';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -27,6 +28,8 @@ const formSchema = z.object({
 
 // This page will be available at /campaign/[campaignId]
 export default function CampaignLeadCapturePage({ params }: { params: { campaignId: string } }) {
+  const searchParams = useSearchParams();
+  const sourceId = searchParams.get('source');
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -41,8 +44,8 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    // In a real app, you'd associate this lead with the campaignId
-    console.log({ ...values, campaignId: params.campaignId });
+    // In a real app, you'd associate this lead with the campaignId and sourceId
+    console.log({ ...values, campaignId: params.campaignId, sourceId });
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     setIsSubmitting(false);

@@ -1,4 +1,4 @@
-import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place } from './types';
+import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Source, CampaignSource } from './types';
 
 const discounts: Discount[] = [
   { id: 'disc_1', code: 'DIWALI20', description: '20% off on all services', type: 'percentage', value: 20, status: 'active' },
@@ -6,28 +6,40 @@ const discounts: Discount[] = [
   { id: 'disc_3', code: 'NEWYEAR15', description: '15% off on ceramic coating', type: 'percentage', value: 15, status: 'inactive' },
 ];
 
-const places: Place[] = [
-  { id: 'place_1', name: 'Gym' },
-  { id: 'place_2', name: 'Salon' },
-  { id: 'place_3', name: 'Mall' },
-  { id: 'place_4', name: 'Apartment Complex' },
+const sources: Source[] = [
+    { id: 'source_1', name: 'Salon' },
+    { id: 'source_2', name: 'Gym' },
+    { id: 'source_3', name: 'Local Shop' },
+    { id: 'source_4', name: 'Dance Class' },
+    { id: 'source_5', name: 'Theatre' },
+    { id: 'source_6', name: 'Apartment' },
+    { id: 'source_7', name: 'Mall' },
+    { id: 'source_8', name: 'Parking Plot' },
+    { id: 'source_9', name: 'Famous Place' },
 ];
+
 
 const campaigns: Campaign[] = [
-  { id: 'cam_1', name: 'Diwali Dhamaka Bangalore', branch: 'Koramangala', city: 'Bangalore', qrCodeUrl: '/campaign/cam_1', scans: 750, leads: 500, encashed: 250, discountId: 'disc_1' },
-  { id: 'cam_2', name: 'Monsoon Offer Bangalore', branch: 'Indiranagar', city: 'Bangalore', qrCodeUrl: '/campaign/cam_2', scans: 980, leads: 620, encashed: 310, discountId: 'disc_2' },
-  { id: 'cam_3', name: 'New Year Special Mumbai', branch: 'HSR Layout', city: 'Mumbai', qrCodeUrl: '/campaign/cam_3', scans: 1500, leads: 1100, encashed: 700, discountId: 'disc_3' },
+  { id: 'cam_1', name: 'Diwali Dhamaka Bangalore', city: 'Bangalore', branchId: 'fran_1', discountId: 'disc_1' },
+  { id: 'cam_2', name: 'Monsoon Offer Bangalore', city: 'Bangalore', branchId: 'fran_2', discountId: 'disc_2' },
+  { id: 'cam_3', name: 'New Year Special Mumbai', city: 'Mumbai', branchId: 'fran_3', discountId: 'disc_3' },
 ];
 
+const campaignSources: CampaignSource[] = [
+    {id: 'cs_1', campaignId: 'cam_1', sourceId: 'source_1', scans: 150, leads: 100, encashed: 50},
+    {id: 'cs_2', campaignId: 'cam_1', sourceId: 'source_2', scans: 200, leads: 150, encashed: 80},
+    {id: 'cs_3', campaignId: 'cam_2', sourceId: 'source_7', scans: 500, leads: 300, encashed: 150},
+]
+
 const leads: Lead[] = [
-  { id: 'lead_1', name: 'Ravi Kumar', phone: '9876543210', vehicle: 'Maruti Swift', status: 'pending', campaignId: 'cam_1', createdAt: '2023-10-15T10:00:00Z' },
-  { id: 'lead_2', name: 'Sunita Sharma', phone: '9876543211', vehicle: 'Hyundai i20', status: 'encashed', campaignId: 'cam_2', createdAt: '2023-10-16T11:30:00Z' },
-  { id: 'lead_3', name: 'Amit Patel', phone: '9876543212', vehicle: 'Honda City', status: 'pending', campaignId: 'cam_1', createdAt: '2023-10-17T14:00:00Z' },
-  { id: 'lead_4', name: 'Priya Singh', phone: '9876543213', vehicle: 'Tata Nexon', status: 'rejected', campaignId: 'cam_3', createdAt: '2023-10-18T16:45:00Z' },
+  { id: 'lead_1', name: 'Ravi Kumar', phone: '9876543210', vehicle: 'Maruti Swift', status: 'pending', campaignId: 'cam_1', sourceId: 'source_1', createdAt: '2023-10-15T10:00:00Z' },
+  { id: 'lead_2', name: 'Sunita Sharma', phone: '9876543211', vehicle: 'Hyundai i20', status: 'encashed', campaignId: 'cam_2', sourceId: 'source_7', createdAt: '2023-10-16T11:30:00Z' },
+  { id: 'lead_3', name: 'Amit Patel', phone: '9876543212', vehicle: 'Honda City', status: 'pending', campaignId: 'cam_1', sourceId: 'source_2', createdAt: '2023-10-17T14:00:00Z' },
+  { id: 'lead_4', name: 'Priya Singh', phone: '9876543213', vehicle: 'Tata Nexon', status: 'rejected', campaignId: 'cam_3', sourceId: 'source_1', createdAt: '2023-10-18T16:45:00Z' },
 ];
 
 const franchises: Franchise[] = [
-    { id: 'fran_1', name: 'Koramangala', totalScans: campaigns.filter(c => c.branch === 'Koramangala').reduce((sum, c) => sum + c.scans, 0), totalLeads: 800, successfullyEncashed: 450 },
+    { id: 'fran_1', name: 'Koramangala', totalScans: campaignSources.filter(cs => campaigns.find(c => c.id === cs.campaignId)?.branchId === 'fran_1').reduce((sum, cs) => sum + cs.scans, 0), totalLeads: 800, successfullyEncashed: 450 },
     { id: 'fran_2', name: 'Indiranagar', totalScans: 980, totalLeads: 620, successfullyEncashed: 310 },
     { id: 'fran_3', name: 'HSR Layout', totalScans: 1500, totalLeads: 1100, successfullyEncashed: 700 },
 ];
@@ -48,9 +60,13 @@ const analyticsData: AnalyticsData = {
 }
 
 export async function getCampaigns(): Promise<Campaign[]> {
-  // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500));
   return campaigns;
+}
+
+export async function getCampaignById(campaignId: string): Promise<Campaign | undefined> {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return campaigns.find(c => c.id === campaignId);
 }
 
 export async function getLeadByPhone(phone: string): Promise<Lead | undefined> {
@@ -89,7 +105,22 @@ export async function getDiscounts(): Promise<Discount[]> {
     return discounts;
 }
 
-export async function getPlaces(): Promise<Place[]> {
+export async function getSources(): Promise<Source[]> {
     await new Promise(resolve => setTimeout(resolve, 500));
-    return places;
+    return sources;
+}
+
+export async function getCampaignSources(campaignId: string): Promise<CampaignSource[]> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return campaignSources.filter(cs => cs.campaignId === campaignId);
+}
+
+export async function getCampaignSourceStats(campaignId: string) {
+    const sources = await getCampaignSources(campaignId);
+    return sources.reduce((acc, source) => {
+        acc.scans += source.scans;
+        acc.leads += source.leads;
+        acc.encashed += source.encashed;
+        return acc;
+    }, { scans: 0, leads: 0, encashed: 0 });
 }

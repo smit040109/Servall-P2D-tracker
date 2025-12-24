@@ -1,11 +1,11 @@
-import { PlacesTable } from "@/components/admin/places-table";
-import { getPlaces } from "@/lib/data";
+import { SourcesTable } from "@/components/admin/sources-table";
+import { getSources } from "@/lib/data";
 
-export default async function PlacesPage() {
-    const places = await getPlaces();
+export default async function SourcesPage() {
+    const sources = await getSources();
     return (
         <div>
-            <PlacesTable places={places} />
+            <SourcesTable sources={sources} />
         </div>
     );
 }
