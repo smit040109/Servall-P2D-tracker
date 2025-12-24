@@ -51,6 +51,9 @@ const ChartContainer = React.forwardRef<
     setIsMounted(true);
   }, []);
 
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <ChartContext.Provider value={{ config }}>
@@ -63,12 +66,10 @@ const ChartContainer = React.forwardRef<
         )}
         {...props}
       >
-        {isMounted ? <>
-          <ChartStyle id={chartId} config={config} />
-          <RechartsPrimitive.ResponsiveContainer>
-            {children}
-          </RechartsPrimitive.ResponsiveContainer>
-        </> : null}
+        <ChartStyle id={chartId} config={config} />
+        <RechartsPrimitive.ResponsiveContainer>
+          {children}
+        </RechartsPrimitive.ResponsiveContainer>
       </div>
     </ChartContext.Provider>
   )
