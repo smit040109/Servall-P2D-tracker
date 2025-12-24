@@ -6,6 +6,10 @@ export type Campaign = {
   city: string;
   branchId: string;
   discountId: string;
+  startDate?: string | FieldValue;
+  endDate?: string | FieldValue;
+  status?: "active" | "paused" | "completed";
+  createdAt?: string | FieldValue;
 };
 
 export type TimelineEvent = {

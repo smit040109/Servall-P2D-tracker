@@ -54,12 +54,17 @@ export async function createCampaign(formData: FormData) {
       city: formData.get('city') as string,
       branchId: formData.get('branchId') as string,
       discountId: formData.get('discountId') as string,
+      startDate: formData.get('startDate') as string,
+      endDate: formData.get('endDate') as string,
+      status: 'active',
+      createdAt: new Date().toISOString(),
     };
     campaigns.push(newCampaign);
     await writeData('campaigns.json', campaigns);
     revalidatePath('/admin/campaigns');
     return { success: true, message: 'Campaign created successfully.' };
   } catch (error) {
+    console.error(error);
     return { success: false, message: 'Failed to create campaign.' };
   }
 }

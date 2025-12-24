@@ -33,11 +33,21 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { PlusCircle, Loader2, Trash2, ArrowRight } from "lucide-react"
+import { PlusCircle, Loader2, Trash2, ArrowRight, CalendarIcon } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import type { Campaign, Franchise, Discount } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { createCampaign, deleteCampaign } from "@/lib/actions"
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
+import { cn } from "@/lib/utils"
+import { format } from "date-fns"
+import { Calendar } from "../ui/calendar"
+import { Badge } from "../ui/badge"
+
+type DateRange = {
+    from: Date | undefined,
+    to: Date | undefined
+}
 
 type CampaignsTableProps = {
   campaigns: Campaign[],
@@ -49,6 +59,7 @@ export function CampaignsTable({ campaigns, branches, discounts }: CampaignsTabl
   const [open, setOpen] = React.useState(false);
   const [isCreating, setIsCreating] = React.useState(false);
   const { toast } = useToast();
+  const [dateRange, setDateRange] = React.useState<DateRange>({ from: undefined, to: undefined });
   
   const [campaignStats, setCampaignStats] = React.useState<Record<string, { scans: number, leads: number, encashed: number }>>({});
   
@@ -72,11 +83,15 @@ export function CampaignsTable({ campaigns, branches, discounts }: CampaignsTabl
     setIsCreating(true);
     
     const formData = new FormData(event.currentTarget);
+    formData.append('startDate', dateRange.from?.toISOString() ?? '');
+    formData.append('endDate', dateRange.to?.toISOString() ?? '');
+
     const result = await createCampaign(formData);
 
     if (result.success) {
       toast({ title: "Success!", description: result.message });
       setOpen(false);
+      setDateRange({ from: undefined, to: undefined });
     } else {
       toast({ variant: "destructive", title: "Error", description: result.message });
     }
@@ -95,6 +110,20 @@ export function CampaignsTable({ campaigns, branches, discounts }: CampaignsTabl
   const getBranchName = (branchId: string) => branches.find(b => b.id === branchId)?.name || 'N/A';
   const getDiscountCode = (discountId: string) => discounts.find(d => d.id === discountId)?.code || 'N/A';
   const getStats = (campaignId: string) => campaignStats[campaignId] || { scans: 0, leads: 0, encashed: 0 };
+  
+  const getStatusBadge = (status: Campaign['status']) => {
+    switch (status) {
+      case 'active':
+        return <Badge variant="default" className="bg-green-600 hover:bg-green-700">Active</Badge>;
+      case 'paused':
+        return <Badge variant="secondary">Paused</Badge>;
+      case 'completed':
+        return <Badge variant="outline">Completed</Badge>;
+      default:
+        return <Badge variant="secondary">Unknown</Badge>;
+    }
+  };
+
 
   return (
     <Card>
@@ -107,7 +136,7 @@ export function CampaignsTable({ campaigns, branches, discounts }: CampaignsTabl
               Create Campaign
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>Create New Campaign</DialogTitle>
               <DialogDescription>
@@ -166,6 +195,48 @@ export function CampaignsTable({ campaigns, branches, discounts }: CampaignsTabl
                   </SelectContent>
                 </Select>
               </div>
+               <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right col-span-1">Duration</Label>
+                  <div className="col-span-3">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <Button
+                            id="date"
+                            variant={"outline"}
+                            className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !dateRange.from && "text-muted-foreground"
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {dateRange.from ? (
+                            dateRange.to ? (
+                                <>
+                                {format(dateRange.from, "LLL dd, y")} -{" "}
+                                {format(dateRange.to, "LLL dd, y")}
+                                </>
+                            ) : (
+                                format(dateRange.from, "LLL dd, y")
+                            )
+                            ) : (
+                            <span>Pick a date range</span>
+                            )}
+                        </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                initialFocus
+                                mode="range"
+                                defaultMonth={dateRange.from}
+                                selected={{ from: dateRange.from, to: dateRange.to }}
+                                onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
+                                numberOfMonths={2}
+                            />
+                        </PopoverContent>
+                    </Popover>
+                  </div>
+               </div>
+
                <Button type="submit" disabled={isCreating}>
                  {isCreating ? <Loader2 className="animate-spin"/> : "Save Campaign"}
                </Button>
@@ -179,6 +250,7 @@ export function CampaignsTable({ campaigns, branches, discounts }: CampaignsTabl
             <TableRow>
               <TableHead>Campaign Name</TableHead>
               <TableHead>City</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Branch</TableHead>
               <TableHead>Discount</TableHead>
               <TableHead className="text-right">Scans</TableHead>
@@ -192,6 +264,7 @@ export function CampaignsTable({ campaigns, branches, discounts }: CampaignsTabl
               <TableRow key={campaign.id}>
                 <TableCell className="font-medium">{campaign.name}</TableCell>
                 <TableCell>{campaign.city}</TableCell>
+                <TableCell>{getStatusBadge(campaign.status)}</TableCell>
                 <TableCell>{getBranchName(campaign.branchId)}</TableCell>
                 <TableCell>{getDiscountCode(campaign.discountId)}</TableCell>
                 <TableCell className="text-right">{getStats(campaign.id).scans.toLocaleString()}</TableCell>
