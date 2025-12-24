@@ -249,22 +249,23 @@ export async function createLead(leadData: { name: string, phone: string, vehicl
             console.error("Firestore is not initialized. Cannot create lead.");
             return { success: false, message: 'Database connection is not available.' };
         }
+        
         const [campaignSources, places] = await Promise.all([
             readData<CampaignSource[]>('campaignSources.json'),
             readData<Place[]>('places.json')
         ]);
         
-        const source = campaignSources.find(cs => cs.id === leadData.sourceId);
-        if (!source) {
+        const campaignSource = campaignSources.find(cs => cs.id === leadData.sourceId);
+        if (!campaignSource) {
             return { success: false, message: 'Invalid QR code. Source not found.' };
         }
         
-        const place = places.find(p => p.id === source.sourceId);
+        const place = places.find(p => p.id === campaignSource.sourceId);
         if (!place) {
             return { success: false, message: 'Invalid place data associated with QR code.' };
         }
 
-        const newLead = {
+        const newLeadPayload = {
             name: leadData.name,
             phone: leadData.phone,
             vehicle: leadData.vehicle,
@@ -276,16 +277,15 @@ export async function createLead(leadData: { name: string, phone: string, vehicl
             createdAt: serverTimestamp(),
         };
 
-        await addDoc(collection(db, "leads"), newLead);
+        await addDoc(collection(db, "leads"), newLeadPayload);
         
         // Increment scan and lead count for the specific campaign source
         const sourceIndex = campaignSources.findIndex(cs => cs.id === leadData.sourceId);
         if (sourceIndex > -1) {
             campaignSources[sourceIndex].scans++;
             campaignSources[sourceIndex].leads++;
+            await writeData('campaignSources.json', campaignSources);
         }
-
-        await writeData('campaignSources.json', campaignSources);
 
         revalidatePath(`/admin/campaigns/${leadData.campaignId}`);
         revalidatePath('/admin');
