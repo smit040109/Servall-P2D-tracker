@@ -46,13 +46,18 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    // In a real app, you'd associate this lead with the campaignId and sourceId
-    console.log({ 
+    
+    // In a real app, you would save this lead data to your database
+    const leadData = { 
       ...values, 
       campaignId: params.campaignId, 
-      category,
-      location,
-    });
+      category: category,
+      location: location,
+      // In a real implementation, you might fetch campaign name, city, etc. here
+      // or associate them on the backend using the campaignId.
+    };
+    console.log("Lead data captured:", leadData);
+
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     setIsSubmitting(false);
