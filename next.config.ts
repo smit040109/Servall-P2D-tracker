@@ -29,16 +29,13 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https',
+        protocol: 'https' as const,
         hostname: 'api.qrserver.com',
         port: '',
         pathname: '/v1/create-qr-code/**',
       },
     ],
   },
-  // In a future version of Next.js, you will need to explicitly configure
-  // "allowedDevOrigins" to allow cross-origin requests in development.
-  // For now, we can add it to silence the warning.
   devServer: {
     allowedDevOrigins: [
       "https://*.cluster-6dx7corvpngoivimwvvljgokdw.cloudworkstations.dev"
