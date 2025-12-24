@@ -219,30 +219,49 @@ export async function deleteBranch(branchId: string) {
 
 
 // --- Lead Actions ---
-export async function updateLeadStatus(leadId: string, leadPhone: string, status: Lead['status'], staffName: string) {
+export async function updateLeadStatus(
+    leadId: string, 
+    leadPhone: string, 
+    staffName: string,
+    updates: Partial<Lead>
+) {
   if (!db) {
     console.error("Firestore is not initialized. Cannot update lead status.");
     return { success: false, message: 'Database connection is not available.' };
   }
   
   const batch = writeBatch(db);
+  const leadRef = doc(db, 'leads', leadId);
 
   try {
-    // 1. Update the lead's status and timeline
-    const leadRef = doc(db, 'leads', leadId);
-    const newEvent: TimelineEvent = {
-        event: 'Offer Encashed',
-        timestamp: serverTimestamp(),
-        source: staffName, // Record which staff member performed the action
-        notes: `Status changed to ${status}`
-    }
-    batch.update(leadRef, { 
-        status: status,
-        timeline: arrayUnion(newEvent)
-    });
+    const updatePayload: any = { ...updates };
 
-    // 2. If status is 'encashed', update the customer record
-    if (status === 'encashed') {
+    // If status is changing to 'encashed', add a timeline event for it.
+    if (updates.status && updates.status === 'encashed') {
+        const encashEvent: TimelineEvent = {
+            event: 'Offer Encashed',
+            timestamp: serverTimestamp(),
+            source: staffName,
+            notes: `Status changed to ${updates.status}`
+        }
+        updatePayload.timeline = arrayUnion(encashEvent);
+    }
+    
+    // If feedback request is being sent, add a timeline event for it.
+    if(updates.feedbackRequestSent) {
+        const feedbackEvent: TimelineEvent = {
+            event: 'Feedback Request Sent',
+            timestamp: serverTimestamp(),
+            source: staffName,
+            notes: 'Feedback request sent to customer'
+        }
+        updatePayload.timeline = arrayUnion(feedbackEvent);
+    }
+    
+    batch.update(leadRef, updatePayload);
+
+    // If status is 'encashed', also update the associated customer record.
+    if (updates.status === 'encashed') {
         const customersRef = collection(db, "customers");
         const q = query(customersRef, where("phone", "==", leadPhone));
         const querySnapshot = await getDocs(q);
@@ -257,14 +276,13 @@ export async function updateLeadStatus(leadId: string, leadPhone: string, status
         }
     }
 
-    // 3. Commit all batched writes
     await batch.commit();
 
     revalidatePath('/branch');
-    return { success: true, message: `Lead status updated to ${status}.` };
+    return { success: true, message: 'Lead updated successfully.' };
 
   } catch (error) {
-    console.error('Failed to update lead status:', error);
-    return { success: false, message: 'Failed to update lead status.' };
+    console.error('Failed to update lead:', error);
+    return { success: false, message: 'Failed to update lead.' };
   }
 }

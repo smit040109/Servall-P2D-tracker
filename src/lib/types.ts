@@ -9,7 +9,7 @@ export type Campaign = {
 };
 
 export type TimelineEvent = {
-  event: 'Form Submitted' | 'Offer Encashed' | 'Status Update';
+  event: 'Form Submitted' | 'Offer Encashed' | 'Status Update' | 'Feedback Request Sent';
   timestamp: string | FieldValue;
   source: string; // e.g., 'System', 'Branch User', 'Admin User'
   notes?: string;
@@ -28,6 +28,9 @@ export type Lead = {
   timeline: TimelineEvent[];
   category?: string;
   location?: string;
+  feedbackRequestSent?: boolean;
+  feedbackScore?: number;
+  googleReview?: boolean;
 };
 
 export type Customer = {

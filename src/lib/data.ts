@@ -74,6 +74,9 @@ function convertFirestoreDocToLead(doc: DocumentData): Lead {
         timeline: timeline,
         category: data.category,
         location: data.placeName,
+        feedbackRequestSent: data.feedbackRequestSent,
+        feedbackScore: data.feedbackScore,
+        googleReview: data.googleReview,
     };
 }
 
