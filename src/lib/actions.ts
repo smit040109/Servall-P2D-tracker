@@ -8,6 +8,7 @@ import { db } from '@/firebase/firebase';
 import { addDoc, collection, serverTimestamp, updateDoc, doc, arrayUnion, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { z } from 'zod';
+import { getCampaignById, getPlaces } from './data';
 
 // Helper function to read data from JSON files
 async function readData<T>(filename: string): Promise<T> {
@@ -225,12 +226,35 @@ export async function deleteBranch(branchId: string) {
 
 // --- Lead Actions ---
 
-// This is kept for other potential server-side logic, but lead creation is now on the client.
-export async function createLeadAction(prevState: any, formData: FormData) {
-    revalidatePath('/admin/leads');
-    // The main logic is now client-side, but we can still perform
-    // server-side revalidation or other tasks here if needed.
-    return { success: true, message: 'Revalidation triggered.' };
+export async function getLeadCreationContext(campaignId: string, sourceId: string) {
+  try {
+    const campaign = await getCampaignById(campaignId);
+    
+    // In a real app, campaignSource would be read from its own file/table
+    const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
+    const campaignSource = campaignSources.find(cs => cs.id === sourceId);
+    
+    if (!campaignSource) {
+      throw new Error('Campaign source not found');
+    }
+    
+    const places = await getPlaces();
+    const place = places.find(p => p.id === campaignSource.sourceId);
+
+    if (!campaign || !place) {
+      throw new Error('Campaign or Place not found');
+    }
+    
+    return {
+      success: true,
+      branchId: campaign.branchId,
+      placeId: place.id,
+      category: place.category,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "An unknown error occurred";
+    return { success: false, error: message };
+  }
 }
 
 
@@ -298,6 +322,7 @@ export async function updateLeadStatus(
     await batch.commit();
 
     revalidatePath('/branch');
+    revalidatePath('/admin/leads');
     return { success: true, message: 'Lead updated successfully.' };
 
   } catch (error) {

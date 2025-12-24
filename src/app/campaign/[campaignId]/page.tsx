@@ -20,7 +20,8 @@ import React from 'react';
 import Logo from '@/components/logo';
 import { useSearchParams } from 'next/navigation';
 import { clientCreateLead } from '@/lib/clientCreateLead';
-import { getCampaignById, getPlaces } from '@/lib/data';
+import { getLeadCreationContext } from '@/lib/actions';
+
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -30,8 +31,7 @@ const formSchema = z.object({
 });
 
 // This page will be available at /campaign/[campaignId]
-export default function CampaignLeadCapturePage({ params: paramsPromise }: { params: Promise<{ campaignId: string }> }) {
-  const params = React.use(paramsPromise);
+export default function CampaignLeadCapturePage({ params }: { params: { campaignId: string } }) {
   const searchParams = useSearchParams();
   const sourceId = searchParams.get('sourceId');
   const { toast } = useToast();
@@ -61,19 +61,19 @@ export default function CampaignLeadCapturePage({ params: paramsPromise }: { par
     setIsSubmitting(true);
     
     try {
-      // These are server-side functions but can be called in client components
-      const campaign = await getCampaignById(params.campaignId);
-      const places = await getPlaces();
+      // Fetch server-side context using the server action
+      const context = await getLeadCreationContext(params.campaignId, sourceId);
+      if (!context.success) {
+        throw new Error(context.error);
+      }
       
-      const place = places.find(p => p.id === sourceId);
-
       const leadData = {
           ...values,
           campaignId: params.campaignId,
           sourceId: sourceId,
-          placeId: place?.id,
-          branchId: campaign?.branchId,
-          category: place?.category,
+          placeId: context.placeId,
+          branchId: context.branchId,
+          category: context.category,
           timeline: [
               { event: "FORM_SUBMITTED", timestamp: new Date().toISOString(), source: "customer" },
           ],
@@ -88,7 +88,7 @@ export default function CampaignLeadCapturePage({ params: paramsPromise }: { par
       });
       form.reset();
     } catch (error: any) {
-        console.error("🔥 FIRESTORE ERROR:", error);
+        console.error("🔥 LEAD CREATION ERROR:", error);
         toast({
             variant: "destructive",
             title: "Submission Failed",
