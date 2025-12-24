@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Car, Loader2 } from 'lucide-react';
-import React from 'react';
+import React, { use } from 'react';
 import Logo from '@/components/logo';
 import { useSearchParams } from 'next/navigation';
 import { clientCreateLead } from '@/lib/clientCreateLead';
@@ -32,11 +32,12 @@ const formSchema = z.object({
 
 // This page will be available at /campaign/[campaignId]
 export default function CampaignLeadCapturePage({ params }: { params: { campaignId: string } }) {
+  const resolvedParams = use(params);
+  const campaignId = resolvedParams.campaignId;
   const searchParams = useSearchParams();
   const sourceId = searchParams.get('sourceId');
   const { toast } = useToast();
-  const campaignId = params.campaignId;
-
+  
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
