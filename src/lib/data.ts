@@ -51,6 +51,7 @@ export async function getCampaignById(campaignId: string): Promise<Campaign | un
     return campaigns.find(c => c.id === campaignId);
 }
 
+// Helper to convert Firestore document to a Lead object, handling Timestamps.
 function convertFirestoreDocToLead(doc: DocumentData): Lead {
     const data = doc.data();
     return {
@@ -85,6 +86,7 @@ export async function getLeadByPhone(phone: string): Promise<Lead | undefined> {
     return convertFirestoreDocToLead(querySnapshot.docs[0]);
 }
 
+// Central function to fetch all leads from the global "leads" collection.
 async function getAllLeads(): Promise<Lead[]> {
     if (!db) {
         console.warn("Firestore is not initialized. Cannot fetch all leads.");
@@ -98,6 +100,7 @@ async function getAllLeads(): Promise<Lead[]> {
 
 export async function getAdminAnalytics(): Promise<AnalyticsData> {
     const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
+    // Fetch all leads from Firestore. This is the single source of truth.
     const leads = await getAllLeads();
     
     const totalScans = campaignSources.reduce((sum, s) => sum + s.scans, 0);
@@ -108,7 +111,7 @@ export async function getAdminAnalytics(): Promise<AnalyticsData> {
         totalScans,
         totalLeads,
         successfullyEncashed,
-        leadsOverTime: [
+        leadsOverTime: [ // This is mock data, but in a real scenario, it would be aggregated from the `leads` collection.
             { date: 'Oct 1', leads: 50, encashed: 20 },
             { date: 'Oct 2', leads: 75, encashed: 35 },
             { date: 'Oct 3', leads: 60, encashed: 40 },
@@ -122,7 +125,7 @@ export async function getAdminAnalytics(): Promise<AnalyticsData> {
 }
 
 export async function getCategoryLeads(): Promise<CategoryLead[]> {
-    const leads = await getAllLeads();
+    const leads = await getAllLeads(); // Reading from Firestore
     const categoryCounts: Record<string, number> = {};
     leads.forEach(lead => {
         if (lead.category) {
@@ -133,7 +136,7 @@ export async function getCategoryLeads(): Promise<CategoryLead[]> {
 }
 
 export async function getLocationLeads(): Promise<LocationLead[]> {
-    const leads = await getAllLeads();
+    const leads = await getAllLeads(); // Reading from Firestore
     const locationCounts: Record<string, { leads: number, category: string }> = {};
 
     leads.forEach(lead => {
@@ -156,6 +159,8 @@ export async function getBranchAnalytics(branchId: string): Promise<AnalyticsDat
     
     const totalScans = branchCampaignSources.reduce((sum, cs) => sum + cs.scans, 0);
     const allLeads = await getAllLeads();
+
+    // The CRM correctly filters all leads to include only those associated with the branch's campaigns.
     const branchLeads = allLeads.filter(l => campaignIds.includes(l.campaignId));
 
     const totalLeads = branchLeads.length;
@@ -199,10 +204,14 @@ export async function getCampaignSources(campaignId: string): Promise<CampaignSo
 
 export async function getCampaignSourceStats(campaignId: string) {
     const sources = await getCampaignSources(campaignId);
-    const allLeads = await getAllLeads();
+    const allLeads = await getAllLeads(); // Fetch all leads from Firestore
+    
+    // Filter all leads to get only those for the specified campaignId.
     const campaignLeads = allLeads.filter(l => l.campaignId === campaignId);
 
     const campaignSourceIds = sources.map(s => s.id);
+    
+    // Further filter campaign leads to those from the campaign's sources.
     const relevantLeads = campaignLeads.filter(l => l.sourceId && campaignSourceIds.includes(l.sourceId));
 
 
