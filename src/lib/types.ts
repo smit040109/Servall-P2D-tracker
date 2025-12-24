@@ -11,7 +11,7 @@ export type Campaign = {
 export type TimelineEvent = {
   event: 'Form Submitted' | 'Offer Encashed' | 'Status Update';
   timestamp: string | FieldValue;
-  source: 'System' | 'Branch';
+  source: string; // e.g., 'System', 'Branch User', 'Admin User'
   notes?: string;
 };
 

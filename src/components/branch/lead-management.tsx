@@ -14,6 +14,11 @@ import { updateLeadStatus } from '@/lib/actions';
 import { LeadTimeline } from './lead-timeline';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 
+const staffUser = {
+  name: "Branch User",
+};
+
+
 export default function LeadManagement() {
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +39,7 @@ export default function LeadManagement() {
 
   const handleVerified = async () => {
     if (lead) {
-      const result = await updateLeadStatus(lead.id, lead.phone, 'encashed');
+      const result = await updateLeadStatus(lead.id, lead.phone, 'encashed', staffUser.name);
       if (result.success) {
         // Refetch the lead to get the updated timeline
         const updatedLead = await getLeadByPhone(phone);

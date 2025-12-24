@@ -219,7 +219,7 @@ export async function deleteBranch(branchId: string) {
 
 
 // --- Lead Actions ---
-export async function updateLeadStatus(leadId: string, leadPhone: string, status: Lead['status']) {
+export async function updateLeadStatus(leadId: string, leadPhone: string, status: Lead['status'], staffName: string) {
   if (!db) {
     console.error("Firestore is not initialized. Cannot update lead status.");
     return { success: false, message: 'Database connection is not available.' };
@@ -233,7 +233,7 @@ export async function updateLeadStatus(leadId: string, leadPhone: string, status
     const newEvent: TimelineEvent = {
         event: 'Offer Encashed',
         timestamp: serverTimestamp(),
-        source: 'Branch',
+        source: staffName, // Record which staff member performed the action
         notes: `Status changed to ${status}`
     }
     batch.update(leadRef, { 
