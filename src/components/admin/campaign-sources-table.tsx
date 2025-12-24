@@ -98,7 +98,7 @@ export function CampaignSourcesTable({ campaignSources, allPlaces, campaign }: C
         <CardTitle>Offline Places</CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-1" disabled={availablePlaces.length === 0}>
+            <Button size="sm" className="gap-1" disabled={allPlaces.length === 0}>
               <PlusCircle className="h-4 w-4" />
               Add Place
             </Button>
@@ -120,7 +120,7 @@ export function CampaignSourcesTable({ campaignSources, allPlaces, campaign }: C
                     <SelectValue placeholder="Select a place" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availablePlaces.map(place => (
+                    {allPlaces.map(place => (
                       <SelectItem key={place.id} value={place.id}>{place.name} ({place.category})</SelectItem>
                     ))}
                   </SelectContent>

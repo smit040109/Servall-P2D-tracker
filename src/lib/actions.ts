@@ -224,7 +224,7 @@ export async function updateLeadStatus(leadId: string, status: Lead['status']) {
     if (status === 'encashed') {
         const lead = leads[leadIndex];
         const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
-        const sourceIndex = campaignSources.findIndex(cs => cs.campaignId === lead.campaignId && cs.sourceId === lead.sourceId);
+        const sourceIndex = campaignSources.findIndex(cs => cs.id === lead.sourceId);
 
         if (sourceIndex > -1) {
             campaignSources[sourceIndex].encashed++;
