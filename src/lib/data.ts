@@ -1,3 +1,4 @@
+
 import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place, CampaignSource, CategoryLead, LocationLead, PlaceWithStats, TimelineEvent, Customer, PincodeLead } from './types';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -70,10 +71,11 @@ function convertFirestoreDocToLead(doc: DocumentData, campaignName?: string, pla
         status: data.status,
         campaignId: data.campaignId,
         sourceId: data.sourceId,
+        placeId: data.placeId,
+        branchId: data.branchId,
         createdAt: (data.createdAt as Timestamp)?.toDate().toISOString() || new Date().toISOString(),
         timeline: timeline,
         category: data.category,
-        location: data.location, // Already contains placeName
         feedbackRequestSent: data.feedbackRequestSent,
         feedbackScore: data.feedbackScore,
         googleReview: data.googleReview,
@@ -103,13 +105,11 @@ export async function getLeadByPhone(phone: string): Promise<Lead | undefined> {
     // Fetch campaign and place names
     const campaign = await getCampaignById(leadData.campaignId);
     
-    const [places, campaignSources] = await Promise.all([
+    const [places] = await Promise.all([
         readData<Place[]>('places.json'),
-        readData<CampaignSource[]>('campaignSources.json'),
     ]);
 
-    const campaignSource = campaignSources.find(cs => cs.id === leadData.sourceId);
-    const place = campaignSource ? places.find(p => p.id === campaignSource.sourceId) : undefined;
+    const place = places.find(p => p.id === leadData.placeId);
     
     return convertFirestoreDocToLead(leadDoc, campaign?.name, place?.name);
 }
@@ -187,18 +187,22 @@ export async function getCategoryLeads(): Promise<CategoryLead[]> {
 
 export async function getLocationLeads(): Promise<LocationLead[]> {
     const leads = await getAllLeads(); // Reading from Firestore
-    const locationCounts: Record<string, { leads: number, category: string }> = {};
+    const [places] = await Promise.all([
+        readData<Place[]>('places.json'),
+    ]);
+    const locationCounts: Record<string, { leads: number, category: string, name: string }> = {};
 
     leads.forEach(lead => {
-        if (lead.location && lead.category) {
-            const locationKey = lead.location; // Use the stored location name directly
+        const place = places.find(p => p.id === lead.placeId);
+        if (place) {
+            const locationKey = place.id;
             if (!locationCounts[locationKey]) {
-                locationCounts[locationKey] = { leads: 0, category: lead.category };
+                locationCounts[locationKey] = { leads: 0, category: place.category, name: place.name };
             }
             locationCounts[locationKey].leads++;
         }
     });
-    return Object.entries(locationCounts).map(([location, data]) => ({ location, leads: data.leads, category: data.category }));
+    return Object.values(locationCounts).map(data => ({ location: data.name, leads: data.leads, category: data.category }));
 }
 
 export async function getPincodeLeads(): Promise<PincodeLead[]> {
@@ -259,9 +263,8 @@ export async function getPlaces(): Promise<Place[]> {
 }
 
 export async function getPlacesWithStats(): Promise<PlaceWithStats[]> {
-    const [places, campaignSources, leads] = await Promise.all([
+    const [places, leads] = await Promise.all([
         getPlaces(),
-        readData<CampaignSource[]>('campaignSources.json'),
         getAllLeads()
     ]);
     
@@ -274,16 +277,10 @@ export async function getPlacesWithStats(): Promise<PlaceWithStats[]> {
     for (const place of places) {
         placeStats.set(place.id, { totalLeads: 0, totalEncashed: 0 });
     }
-
-    // Map sourceId (from CampaignSource) to placeId
-    const sourceIdToPlaceId = new Map<string, string>();
-    for (const cs of campaignSources) {
-        sourceIdToPlaceId.set(cs.id, cs.sourceId);
-    }
     
-    // Aggregate leads and encashed counts
+    // Aggregate leads and encashed counts from Firestore leads
     for (const lead of leads) {
-        const placeId = sourceIdToPlaceId.get(lead.sourceId);
+        const placeId = lead.placeId;
         if (placeId && placeStats.has(placeId)) {
             const stats = placeStats.get(placeId)!;
             stats.totalLeads++;

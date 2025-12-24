@@ -29,10 +29,11 @@ export type Lead = {
   status: 'pending' | 'encashed' | 'rejected';
   campaignId: string;
   sourceId: string; // This is the ID of the CampaignSource document
+  placeId: string; // ID of the master Place
+  branchId: string;
+  category: string;
   createdAt: string | FieldValue;
   timeline: TimelineEvent[];
-  category?: string;
-  location?: string;
   feedbackRequestSent?: boolean;
   feedbackScore?: number;
   googleReview?: boolean;
@@ -137,5 +138,3 @@ export type Staff = {
   totalHandled: number;
   totalEncashed: number;
 };
-
-    

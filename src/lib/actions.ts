@@ -255,26 +255,38 @@ export async function createLeadAction(prevState: any, formData: FormData) {
     const { pincode, ...restOfValidatedData } = validatedFields.data;
 
     try {
-        const places = await readData<Place[]>('places.json');
-        const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
+        const [places, campaignSources, campaigns] = await Promise.all([
+            readData<Place[]>('places.json'),
+            readData<CampaignSource[]>('campaignSources.json'),
+            readData<Campaign[]>('campaigns.json')
+        ]);
         
         const campaignSource = campaignSources.find(cs => cs.id === validatedFields.data.sourceId);
         const place = campaignSource ? places.find(p => p.id === campaignSource.sourceId) : undefined;
+        const campaign = campaigns.find(c => c.id === validatedFields.data.campaignId);
+
+        if (!campaign || !place) {
+            return { success: false, message: "Invalid campaign or place data." };
+        }
 
         const batch = writeBatch(db);
         const leadsRef = collection(db, "leads");
         const newLeadRef = doc(leadsRef);
 
-        const newLead: any = {
-            ...restOfValidatedData,
+        const newLead: Omit<Lead, 'id'> = {
+            name: validatedFields.data.name,
+            phone: validatedFields.data.phone,
+            vehicle: validatedFields.data.vehicle,
+            campaignId: validatedFields.data.campaignId,
+            sourceId: validatedFields.data.sourceId,
+            placeId: place.id,
+            branchId: campaign.branchId,
+            category: place.category,
             status: "pending",
             createdAt: serverTimestamp(),
             timeline: [
-                { event: "QR_SCANNED", timestamp: serverTimestamp(), source: "customer" },
                 { event: "FORM_SUBMITTED", timestamp: serverTimestamp(), source: "customer" },
             ],
-            category: place?.category || 'Unknown',
-            location: place?.name || 'Unknown',
         };
         
         if (pincode) {
