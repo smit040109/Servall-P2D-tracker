@@ -14,10 +14,9 @@ const places: Place[] = [
 ];
 
 const campaigns: Campaign[] = [
-  { id: 'cam_1', name: 'Diwali Dhamaka', branch: 'Koramangala', place: 'Gym', qrCodeUrl: '/campaign/cam_1', scans: 750, leads: 500, encashed: 250, discountId: 'disc_1' },
-  { id: 'cam_1_mall', name: 'Diwali Dhamaka', branch: 'Koramangala', place: 'Mall', qrCodeUrl: '/campaign/cam_1_mall', scans: 500, leads: 300, encashed: 200, discountId: 'disc_1' },
-  { id: 'cam_2', name: 'Monsoon Offer', branch: 'Indiranagar', place: 'Salon', qrCodeUrl: '/campaign/cam_2', scans: 980, leads: 620, encashed: 310, discountId: 'disc_2' },
-  { id: 'cam_3', name: 'New Year Special', branch: 'HSR Layout', place: 'Apartment Complex', qrCodeUrl: '/campaign/cam_3', scans: 1500, leads: 1100, encashed: 700, discountId: 'disc_3' },
+  { id: 'cam_1', name: 'Diwali Dhamaka Bangalore', branch: 'Koramangala', city: 'Bangalore', qrCodeUrl: '/campaign/cam_1', scans: 750, leads: 500, encashed: 250, discountId: 'disc_1' },
+  { id: 'cam_2', name: 'Monsoon Offer Bangalore', branch: 'Indiranagar', city: 'Bangalore', qrCodeUrl: '/campaign/cam_2', scans: 980, leads: 620, encashed: 310, discountId: 'disc_2' },
+  { id: 'cam_3', name: 'New Year Special Mumbai', branch: 'HSR Layout', city: 'Mumbai', qrCodeUrl: '/campaign/cam_3', scans: 1500, leads: 1100, encashed: 700, discountId: 'disc_3' },
 ];
 
 const leads: Lead[] = [

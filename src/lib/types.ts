@@ -2,7 +2,7 @@ export type Campaign = {
   id: string;
   name: string;
   branch: string;
-  place: string; // New field
+  city: string;
   qrCodeUrl: string;
   scans: number;
   leads: number;

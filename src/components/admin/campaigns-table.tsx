@@ -36,10 +36,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { QrCode, PlusCircle, Loader2, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import type { Campaign } from "@/lib/types"
+import { getDiscounts } from "@/lib/data"
 
 export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
   const [open, setOpen] = React.useState(false);
   const [isCreating, setIsCreating] = React.useState(false);
+  const [discounts, setDiscounts] = React.useState<Awaited<ReturnType<typeof getDiscounts>>>([]);
+
+  React.useEffect(() => {
+    getDiscounts().then(setDiscounts);
+  }, [])
 
   async function handleCreateCampaign(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -81,7 +87,7 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
             <DialogHeader>
               <DialogTitle>Create New Campaign</DialogTitle>
               <DialogDescription>
-                Fill in the details to generate a new campaign QR code.
+                A campaign is city-based and can have multiple offline sources.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreateCampaign} className="grid gap-4 py-4">
@@ -89,7 +95,22 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
                 <Label htmlFor="name" className="text-right">
                   Name
                 </Label>
-                <Input id="name" placeholder="e.g. Summer Sale" className="col-span-3" required />
+                <Input id="name" placeholder="e.g. Surat Offline Campaign" className="col-span-3" required />
+              </div>
+               <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="city" className="text-right">
+                  City
+                </Label>
+                <Select required>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a city" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="surat">Surat</SelectItem>
+                    <SelectItem value="bangalore">Bangalore</SelectItem>
+                    <SelectItem value="mumbai">Mumbai</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="branch" className="text-right">
@@ -107,23 +128,22 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
                 </Select>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="place" className="text-right">
-                  Place
+                <Label htmlFor="discount" className="text-right">
+                  Discount
                 </Label>
                 <Select required>
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select a place" />
+                    <SelectValue placeholder="Select a discount" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="gym">Gym</SelectItem>
-                    <SelectItem value="salon">Salon</SelectItem>
-                    <SelectItem value="mall">Mall</SelectItem>
-                    <SelectItem value="apartment">Apartment Complex</SelectItem>
+                    {discounts.map(d => (
+                       <SelectItem key={d.id} value={d.id}>{d.code} - {d.description}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
                <Button type="submit" disabled={isCreating}>
-                 {isCreating ? <Loader2 className="animate-spin"/> : "Generate QR Code"}
+                 {isCreating ? <Loader2 className="animate-spin"/> : "Save Campaign"}
                </Button>
             </form>
           </DialogContent>
@@ -134,8 +154,9 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
           <TableHeader>
             <TableRow>
               <TableHead>Campaign Name</TableHead>
+              <TableHead>City</TableHead>
               <TableHead>Branch</TableHead>
-              <TableHead>Place</TableHead>
+              <TableHead>Discount</TableHead>
               <TableHead className="text-right">Scans</TableHead>
               <TableHead className="text-right">Leads</TableHead>
               <TableHead className="text-right">Encashed</TableHead>
@@ -146,8 +167,9 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
             {campaigns.map((campaign) => (
               <TableRow key={campaign.id}>
                 <TableCell className="font-medium">{campaign.name}</TableCell>
+                <TableCell>{campaign.city}</TableCell>
                 <TableCell>{campaign.branch}</TableCell>
-                <TableCell>{campaign.place}</TableCell>
+                <TableCell>{campaign.discountId}</TableCell>
                 <TableCell className="text-right">{campaign.scans.toLocaleString()}</TableCell>
                 <TableCell className="text-right">{campaign.leads.toLocaleString()}</TableCell>
                 <TableCell className="text-right">{campaign.encashed.toLocaleString()}</TableCell>
