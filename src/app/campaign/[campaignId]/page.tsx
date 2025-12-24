@@ -19,7 +19,7 @@ import { Car, Loader2 } from 'lucide-react';
 import React from 'react';
 import Logo from '@/components/logo';
 import { useSearchParams } from 'next/navigation';
-import { createLead } from '@/lib/actions';
+import { createLead } from '@/lib/createLead';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -57,32 +57,33 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
         return;
     }
 
-    const leadData = { 
-      ...values, 
-      campaignId: params.campaignId, 
-      sourceId: sourceId
-    };
+    try {
+      const leadData = { 
+        ...values, 
+        campaignId: params.campaignId, 
+        sourceId: sourceId
+      };
+      
+      await createLead(leadData);
+      
+      console.log("Lead saved to Firestore");
+      toast({
+          title: 'Success!',
+          description: 'Your details have been submitted. Our team will contact you shortly.',
+      });
+      form.reset();
 
-    console.log("Submitting lead:", leadData);
-    const result = await createLead(leadData);
-
-    if (result.success) {
-        console.log("Lead saved to Firestore");
+    } catch (error: any) { {
         toast({
-            title: 'Success!',
-            description: 'Your details have been submitted. Our team will contact you shortly.',
-        });
-        form.reset();
-    } else {
-         toast({
-            variant: "destructive",
-            title: "Submission Failed",
-            description: result.message || "Could not save your details. Please try again.",
-        });
+          variant: "destructive",
+          title: "Submission Failed",
+          description: error.message || "Could not save your details. Please try again.",
+      });
     }
-    
+  } finally {
     setIsSubmitting(false);
   }
+}
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
