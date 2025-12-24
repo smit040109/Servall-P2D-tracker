@@ -28,7 +28,8 @@ const formSchema = z.object({
 });
 
 // This page will be available at /campaign/[campaignId]
-export default function CampaignLeadCapturePage({ params }: { params: { campaignId: string } }) {
+export default function CampaignLeadCapturePage({ params: paramsPromise }: { params: Promise<{ campaignId: string }> }) {
+  const params = React.use(paramsPromise);
   const searchParams = useSearchParams();
   const sourceId = searchParams.get('sourceId');
 
