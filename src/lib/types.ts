@@ -39,6 +39,7 @@ export type Lead = {
 
 export type Customer = {
     id: string; // Firestore document ID
+    name: string;
     phone: string; // The unique identifier
     pincode?: string;
     firstVisitDate: string | FieldValue;

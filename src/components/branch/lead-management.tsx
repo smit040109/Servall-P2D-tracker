@@ -55,6 +55,7 @@ export default function LeadManagement() {
   
   const handleUpdate = async (updates: Partial<Lead>) => {
       if (lead) {
+          setIsLoading(true);
           const result = await updateLeadStatus(lead.id, lead.phone, staffUser.name, updates);
           if (result.success) {
               const updatedLead = await getLeadByPhone(phone);
@@ -63,6 +64,7 @@ export default function LeadManagement() {
           } else {
               toast({ variant: "destructive", title: "Error", description: result.message });
           }
+          setIsLoading(false);
       }
   };
 
@@ -75,6 +77,14 @@ export default function LeadManagement() {
   }
 
   const handleSaveFeedback = () => {
+    if (!feedbackScore) {
+        toast({
+            variant: "destructive",
+            title: "Missing Rating",
+            description: "Please select a feedback score before saving.",
+        });
+        return;
+    }
     handleUpdate({
         feedbackScore: feedbackScore ? parseInt(feedbackScore) : undefined,
         googleReview: googleReview
@@ -119,7 +129,7 @@ export default function LeadManagement() {
           </div>
         )}
 
-        {lead === null && (
+        {lead === null && !isLoading && (
           <div className="text-center py-8 text-muted-foreground">
             <p>No lead found for this phone number.</p>
           </div>
@@ -146,8 +156,8 @@ export default function LeadManagement() {
                 
                 {lead.status === 'pending' && (
                     <div className="mt-4">
-                        <Button className="w-full" onClick={() => setIsOtpOpen(true)}>
-                            Verify & Encash Offer
+                        <Button className="w-full" onClick={() => setIsOtpOpen(true)} disabled={isLoading}>
+                            {isLoading ? <Loader2 className="animate-spin"/> : 'Verify & Encash Offer'}
                         </Button>
                     </div>
                 )}
@@ -159,8 +169,8 @@ export default function LeadManagement() {
                         <h4 className="text-sm font-semibold flex items-center gap-2"><MessageSquareQuote className="h-4 w-4" />Post-Visit Actions</h4>
                         
                         {!lead.feedbackRequestSent ? (
-                            <Button variant="outline" size="sm" className="w-full" onClick={handleSendFeedbackRequest}>
-                                <Send className="mr-2 h-4 w-4" /> Log Feedback Request Sent
+                            <Button variant="outline" size="sm" className="w-full" onClick={handleSendFeedbackRequest} disabled={isLoading}>
+                               {isLoading ? <Loader2 className="animate-spin"/> : <><Send className="mr-2 h-4 w-4" /> Log Feedback Request Sent</>}
                             </Button>
                         ) : (
                            <div className="p-3 bg-background/50 rounded-md space-y-4">
@@ -168,7 +178,7 @@ export default function LeadManagement() {
                                <div className="grid grid-cols-2 gap-4">
                                   <div className="space-y-2">
                                     <Label htmlFor="feedback-score" className="flex items-center gap-1 text-xs"><Star className="h-3 w-3" /> Feedback Score</Label>
-                                    <Select value={feedbackScore} onValueChange={setFeedbackScore}>
+                                    <Select value={feedbackScore} onValueChange={setFeedbackScore} disabled={!!lead.feedbackScore || isLoading}>
                                       <SelectTrigger id="feedback-score">
                                         <SelectValue placeholder="Rate 1-5" />
                                       </SelectTrigger>
@@ -183,12 +193,14 @@ export default function LeadManagement() {
                                   </div>
                                   <div className="space-y-2 pt-6">
                                      <div className="flex items-center space-x-2">
-                                        <Checkbox id="google-review" checked={googleReview} onCheckedChange={(checked) => setGoogleReview(checked as boolean)} />
+                                        <Checkbox id="google-review" checked={googleReview} onCheckedChange={(checked) => setGoogleReview(checked as boolean)} disabled={!!lead.googleReview || isLoading}/>
                                         <Label htmlFor="google-review" className="text-xs">Left Google Review?</Label>
                                     </div>
                                   </div>
                                </div>
-                                <Button size="sm" className="w-full" onClick={handleSaveFeedback}>Save Feedback</Button>
+                                {!lead.feedbackScore && <Button size="sm" className="w-full" onClick={handleSaveFeedback} disabled={isLoading}>
+                                    {isLoading ? <Loader2 className="animate-spin"/> : 'Save Feedback'}
+                                </Button>}
                            </div>
                         )}
                       </div>

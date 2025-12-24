@@ -240,27 +240,30 @@ export async function updateLeadStatus(
 
   try {
     const updatePayload: any = { ...updates };
+    let timelineEvents: TimelineEvent[] = [];
 
     // If status is changing to 'encashed', add a timeline event for it.
     if (updates.status && updates.status === 'encashed') {
-        const encashEvent: TimelineEvent = {
+        timelineEvents.push({
             event: 'Offer Encashed',
             timestamp: serverTimestamp(),
             source: staffName,
             notes: `Status changed to ${updates.status}`
-        }
-        updatePayload.timeline = arrayUnion(encashEvent);
+        });
     }
     
     // If feedback request is being sent, add a timeline event for it.
     if(updates.feedbackRequestSent) {
-        const feedbackEvent: TimelineEvent = {
+        timelineEvents.push({
             event: 'Feedback Request Sent',
             timestamp: serverTimestamp(),
             source: staffName,
             notes: 'Feedback request sent to customer'
-        }
-        updatePayload.timeline = arrayUnion(feedbackEvent);
+        });
+    }
+
+    if(timelineEvents.length > 0) {
+      updatePayload.timeline = arrayUnion(...timelineEvents);
     }
     
     batch.update(leadRef, updatePayload);
@@ -276,7 +279,8 @@ export async function updateLeadStatus(
             const customerRef = doc(db, "customers", customerDoc.id);
             const customerData = customerDoc.data() as Customer;
             batch.update(customerRef, {
-                totalEncashments: (customerData.totalEncashments || 0) + 1
+                totalEncashments: (customerData.totalEncashments || 0) + 1,
+                lastVisitDate: serverTimestamp(), // Also update last visit on encashment
             });
         }
     }
