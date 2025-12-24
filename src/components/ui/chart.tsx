@@ -43,8 +43,14 @@ const ChartContainer = React.forwardRef<
     >["children"]
   }
 >(({ id, className, children, config, ...props }, ref) => {
-  const uniqueId = React.useId()
-  const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`
+  const [isMounted, setIsMounted] = React.useState(false);
+  const generatedId = React.useId()
+  const chartId = `chart-${id || generatedId.replace(/:/g, "")}`
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
 
   return (
     <ChartContext.Provider value={{ config }}>
@@ -57,10 +63,12 @@ const ChartContainer = React.forwardRef<
         )}
         {...props}
       >
-        <ChartStyle id={chartId} config={config} />
-        <RechartsPrimitive.ResponsiveContainer>
-          {children}
-        </RechartsPrimitive.ResponsiveContainer>
+        {isMounted ? <>
+          <ChartStyle id={chartId} config={config} />
+          <RechartsPrimitive.ResponsiveContainer>
+            {children}
+          </RechartsPrimitive.ResponsiveContainer>
+        </> : null}
       </div>
     </ChartContext.Provider>
   )
