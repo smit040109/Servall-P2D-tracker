@@ -253,7 +253,7 @@ export async function createLeadAction(prevState: any, formData: FormData) {
     }
     
     const { pincode, ...restOfValidatedData } = validatedFields.data;
-    const newLeadRef = doc(collection(db, "leads"));
+    
 
 
     try {
@@ -272,6 +272,7 @@ export async function createLeadAction(prevState: any, formData: FormData) {
         }
 
         const batch = writeBatch(db);
+        const newLeadRef = doc(collection(db, "leads"));
 
         const newLead: Omit<Lead, 'id'> = {
             name: validatedFields.data.name,

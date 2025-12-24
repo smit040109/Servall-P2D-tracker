@@ -115,14 +115,27 @@ export async function getLeadByPhone(phone: string): Promise<Lead | undefined> {
 }
 
 // Central function to fetch all leads from the global "leads" collection.
-async function getAllLeads(): Promise<Lead[]> {
+export async function getAllLeads(): Promise<Lead[]> {
     if (!db) {
         console.warn("Firestore is not initialized. Cannot fetch all leads.");
         return [];
     }
+    const [campaigns, places] = await Promise.all([
+      getCampaigns(),
+      getPlaces()
+    ]);
+    
+    const campaignMap = new Map(campaigns.map(c => [c.id, c.name]));
+    const placeMap = new Map(places.map(p => [p.id, p.name]));
+
     const leadsRef = collection(db, 'leads');
     const querySnapshot = await getDocs(leadsRef);
-    return querySnapshot.docs.map(doc => convertFirestoreDocToLead(doc));
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      const campaignName = campaignMap.get(data.campaignId);
+      const placeName = placeMap.get(data.placeId);
+      return convertFirestoreDocToLead(doc, campaignName, placeName)
+    });
 }
 
 async function getAllCustomers(): Promise<Customer[]> {
