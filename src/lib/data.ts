@@ -51,7 +51,7 @@ export async function getCampaignById(campaignId: string): Promise<Campaign | un
 }
 
 // Helper to convert Firestore document to a Lead object, handling Timestamps.
-function convertFirestoreDocToLead(doc: DocumentData): Lead {
+function convertFirestoreDocToLead(doc: DocumentData, campaignName?: string, placeName?: string): Lead {
     const data = doc.data();
     
     // Convert timeline event timestamps
@@ -73,10 +73,12 @@ function convertFirestoreDocToLead(doc: DocumentData): Lead {
         createdAt: (data.createdAt as Timestamp)?.toDate().toISOString() || new Date().toISOString(),
         timeline: timeline,
         category: data.category,
-        location: data.placeName,
+        location: data.location, // Already contains placeName
         feedbackRequestSent: data.feedbackRequestSent,
         feedbackScore: data.feedbackScore,
         googleReview: data.googleReview,
+        campaignName,
+        placeName,
     };
 }
 
@@ -95,7 +97,21 @@ export async function getLeadByPhone(phone: string): Promise<Lead | undefined> {
     }
 
     // Assuming phone number is unique, return the first found lead
-    return convertFirestoreDocToLead(querySnapshot.docs[0]);
+    const leadDoc = querySnapshot.docs[0];
+    const leadData = leadDoc.data();
+
+    // Fetch campaign and place names
+    const campaign = await getCampaignById(leadData.campaignId);
+    
+    const [places, campaignSources] = await Promise.all([
+        readData<Place[]>('places.json'),
+        readData<CampaignSource[]>('campaignSources.json'),
+    ]);
+
+    const campaignSource = campaignSources.find(cs => cs.id === leadData.sourceId);
+    const place = campaignSource ? places.find(p => p.id === campaignSource.sourceId) : undefined;
+    
+    return convertFirestoreDocToLead(leadDoc, campaign?.name, place?.name);
 }
 
 // Central function to fetch all leads from the global "leads" collection.
@@ -106,7 +122,7 @@ async function getAllLeads(): Promise<Lead[]> {
     }
     const leadsRef = collection(db, 'leads');
     const querySnapshot = await getDocs(leadsRef);
-    return querySnapshot.docs.map(convertFirestoreDocToLead);
+    return querySnapshot.docs.map(doc => convertFirestoreDocToLead(doc));
 }
 
 async function getAllCustomers(): Promise<Customer[]> {

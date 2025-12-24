@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, User, Phone, Car, Clock, BadgeCheck, BadgeX, BadgeHelp, FileClock, MapPin, Star, MessageSquareQuote, CheckSquare, Send } from 'lucide-react';
+import { Search, Loader2, User, Phone, Car, Clock, BadgeCheck, BadgeX, BadgeHelp, FileClock, MapPin, Star, MessageSquareQuote, CheckSquare, Send, QrCode, Building } from 'lucide-react';
 import type { Lead } from '@/lib/types';
 import { getLeadByPhone } from '@/lib/data';
 import { Badge } from '../ui/badge';
@@ -152,6 +152,8 @@ export default function LeadManagement() {
                     <div className="flex items-center gap-2"><Car className="w-4 h-4 text-muted-foreground" /> <span>{lead.vehicle}</span></div>
                     <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-muted-foreground" /> <span>{format(new Date(lead.createdAt as string), "PPP")}</span></div>
                     {lead.pincode && <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-muted-foreground" /> <span>{lead.pincode}</span></div>}
+                    {lead.campaignName && <div className="flex items-center gap-2"><QrCode className="w-4 h-4 text-muted-foreground" /> <span>{lead.campaignName}</span></div>}
+                    {lead.placeName && <div className="flex items-center gap-2"><Building className="w-4 h-4 text-muted-foreground" /> <span>{lead.placeName}</span></div>}
                 </div>
                 
                 {lead.status === 'pending' && (

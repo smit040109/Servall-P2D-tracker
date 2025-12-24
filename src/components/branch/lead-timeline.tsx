@@ -1,7 +1,7 @@
 "use client";
 
 import type { TimelineEvent } from "@/lib/types";
-import { CheckCircle, FilePenLine, Send } from "lucide-react";
+import { CheckCircle, FilePenLine, Send, MessageCircleQuestion } from "lucide-react";
 import { format } from "date-fns";
 
 type LeadTimelineProps = {
@@ -18,12 +18,12 @@ export function LeadTimeline({ timeline = [] }: LeadTimelineProps) {
 
   const getIcon = (event: TimelineEvent['event']) => {
     switch(event) {
-        case 'Form Submitted':
+        case 'FORM_SUBMITTED':
             return <FilePenLine className="h-5 w-5 text-blue-500" />;
         case 'Offer Encashed':
             return <CheckCircle className="h-5 w-5 text-green-500" />;
         case 'Feedback Request Sent':
-            return <Send className="h-5 w-5 text-purple-500" />;
+            return <MessageCircleQuestion className="h-5 w-5 text-purple-500" />;
         default:
             return <CheckCircle className="h-5 w-5 text-gray-500" />;
     }

@@ -35,6 +35,8 @@ export type Lead = {
   feedbackRequestSent?: boolean;
   feedbackScore?: number;
   googleReview?: boolean;
+  campaignName?: string; // Added for UI
+  placeName?: string; // Added for UI
 };
 
 export type Customer = {
