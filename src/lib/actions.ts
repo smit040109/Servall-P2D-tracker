@@ -255,25 +255,6 @@ export async function createLeadAction(prevState: any, formData: FormData) {
     const { pincode, ...restOfValidatedData } = validatedFields.data;
 
     try {
-        // --- Start Scan/Lead Count Update ---
-        try {
-            const campaignSourcesPath = path.join(process.cwd(), 'src', 'lib', 'data', 'campaignSources.json');
-            const campaignSources: CampaignSource[] = JSON.parse(await fs.readFile(campaignSourcesPath, 'utf-8'));
-            
-            const sourceIndex = campaignSources.findIndex(cs => cs.id === validatedFields.data.sourceId);
-            
-            if (sourceIndex !== -1) {
-            campaignSources[sourceIndex].scans += 1;
-            campaignSources[sourceIndex].leads += 1;
-
-            await fs.writeFile(campaignSourcesPath, JSON.stringify(campaignSources, null, 2));
-            }
-        } catch (error) {
-            console.error("Failed to update scan/lead counts:", error);
-            // Non-critical, so we don't block lead creation
-        }
-        // --- End Scan/Lead Count Update ---
-
         const places = await readData<Place[]>('places.json');
         const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
         
@@ -423,5 +404,3 @@ export async function updateLeadStatus(
     return { success: false, message: 'Failed to update lead.' };
   }
 }
-
-    
