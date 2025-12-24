@@ -67,6 +67,7 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
     const result = await createLead(leadData);
 
     if (result.success) {
+        console.log("Lead saved to Firestore");
         toast({
             title: 'Success!',
             description: 'Your details have been submitted. Our team will contact you shortly.',
