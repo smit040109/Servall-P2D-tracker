@@ -62,3 +62,14 @@ export type Discount = {
     value: number;
     status: 'active' | 'inactive';
 };
+
+export type CategoryLead = {
+  category: string;
+  leads: number;
+};
+
+export type LocationLead = {
+  location: string;
+  category: string;
+  leads: number;
+};

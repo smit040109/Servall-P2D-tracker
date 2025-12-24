@@ -1,5 +1,5 @@
 
-import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place, CampaignSource } from './types';
+import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place, CampaignSource, CategoryLead, LocationLead } from './types';
 
 const discounts: Discount[] = [
   { id: 'disc_1', code: 'DIWALI20', description: '20% off on all services', type: 'percentage', value: 20, status: 'active' },
@@ -26,16 +26,17 @@ const campaigns: Campaign[] = [
 ];
 
 const campaignSources: CampaignSource[] = [
-    {id: 'cs_1', campaignId: 'cam_1', sourceId: 'place_1', scans: 150, leads: 100, encashed: 50},
-    {id: 'cs_2', campaignId: 'cam_1', sourceId: 'place_3', scans: 200, leads: 150, encashed: 80},
-    {id: 'cs_3', campaignId: 'cam_2', sourceId: 'place_8', scans: 500, leads: 300, encashed: 150},
+    {id: 'cs_1', campaignId: 'cam_1', sourceId: 'place_1', scans: 150, leads: 42, encashed: 20},
+    {id: 'cs_2', campaignId: 'cam_1', sourceId: 'place_2', scans: 80, leads: 18, encashed: 10},
+    {id: 'cs_3', campaignId: 'cam_1', sourceId: 'place_3', scans: 200, leads: 60, encashed: 40},
+    {id: 'cs_4', campaignId: 'cam_2', sourceId: 'place_8', scans: 500, leads: 95, encashed: 55},
 ]
 
 const leads: Lead[] = [
-  { id: 'lead_1', name: 'Ravi Kumar', phone: '9876543210', vehicle: 'Maruti Swift', status: 'pending', campaignId: 'cam_1', sourceId: 'place_1', createdAt: '2023-10-15T10:00:00Z' },
-  { id: 'lead_2', name: 'Sunita Sharma', phone: '9876543211', vehicle: 'Hyundai i20', status: 'encashed', campaignId: 'cam_2', sourceId: 'place_8', createdAt: '2023-10-16T11:30:00Z' },
-  { id: 'lead_3', name: 'Amit Patel', phone: '9876543212', vehicle: 'Honda City', status: 'pending', campaignId: 'cam_1', sourceId: 'place_3', createdAt: '2023-10-17T14:00:00Z' },
-  { id: 'lead_4', name: 'Priya Singh', phone: '9876543213', vehicle: 'Tata Nexon', status: 'rejected', campaignId: 'cam_3', sourceId: 'place_1', createdAt: '2023-10-18T16:45:00Z' },
+  { id: 'lead_1', name: 'Ravi Kumar', phone: '9876543210', vehicle: 'Maruti Swift', status: 'pending', campaignId: 'cam_1', sourceId: 'place_1', createdAt: '2023-10-15T10:00:00Z', category: 'Salon', location: 'abc_salon' },
+  { id: 'lead_2', name: 'Sunita Sharma', phone: '9876543211', vehicle: 'Hyundai i20', status: 'encashed', campaignId: 'cam_2', sourceId: 'place_8', createdAt: '2023-10-16T11:30:00Z', category: 'Mall', location: 'phoenix_mall' },
+  { id: 'lead_3', name: 'Amit Patel', phone: '9876543212', vehicle: 'Honda City', status: 'pending', campaignId: 'cam_1', sourceId: 'place_3', createdAt: '2023-10-17T14:00:00Z', category: 'Gym', location: 'golds_gym' },
+  { id: 'lead_4', name: 'Priya Singh', phone: '9876543213', vehicle: 'Tata Nexon', status: 'rejected', campaignId: 'cam_1', sourceId: 'place_2', createdAt: '2023-10-18T16:45:00Z', category: 'Salon', location: 'xyz_salon' },
 ];
 
 const franchises: Franchise[] = [
@@ -59,6 +60,21 @@ const analyticsData: AnalyticsData = {
     ]
 }
 
+const categoryLeads: CategoryLead[] = [
+    { category: 'Salon', leads: 120 },
+    { category: 'Gym', leads: 60 },
+    { category: 'Mall', leads: 95 },
+];
+
+const locationLeads: LocationLead[] = [
+    { location: 'ABC Salon', leads: 42, category: 'Salon' },
+    { location: 'XYZ Salon', leads: 18, category: 'Salon' },
+    { location: 'Royal Salon', leads: 65, category: 'Salon' },
+    { location: 'Gold\'s Gym', leads: 60, category: 'Gym' },
+    { location: 'Phoenix Mall', leads: 95, category: 'Mall' },
+];
+
+
 export async function getCampaigns(): Promise<Campaign[]> {
   await new Promise(resolve => setTimeout(resolve, 500));
   return campaigns;
@@ -77,6 +93,16 @@ export async function getLeadByPhone(phone: string): Promise<Lead | undefined> {
 export async function getAdminAnalytics(): Promise<AnalyticsData> {
     await new Promise(resolve => setTimeout(resolve, 500));
     return analyticsData;
+}
+
+export async function getCategoryLeads(): Promise<CategoryLead[]> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return categoryLeads;
+}
+
+export async function getLocationLeads(): Promise<LocationLead[]> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return locationLeads;
 }
 
 export async function getBranchAnalytics(branchId: string): Promise<AnalyticsData> {
