@@ -69,6 +69,10 @@ function convertFirestoreDocToLead(doc: DocumentData): Lead {
 
 
 export async function getLeadByPhone(phone: string): Promise<Lead | undefined> {
+    if (!db) {
+        console.warn("Firestore is not initialized. Cannot fetch lead by phone.");
+        return undefined;
+    }
     const leadsRef = collection(db, 'leads');
     const q = query(leadsRef, where('phone', '==', phone));
     const querySnapshot = await getDocs(q);
@@ -82,6 +86,10 @@ export async function getLeadByPhone(phone: string): Promise<Lead | undefined> {
 }
 
 async function getAllLeads(): Promise<Lead[]> {
+    if (!db) {
+        console.warn("Firestore is not initialized. Cannot fetch all leads.");
+        return [];
+    }
     const leadsRef = collection(db, 'leads');
     const querySnapshot = await getDocs(leadsRef);
     return querySnapshot.docs.map(convertFirestoreDocToLead);

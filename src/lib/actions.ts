@@ -214,6 +214,10 @@ export async function deleteBranch(branchId: string) {
 // --- Lead Actions ---
 export async function updateLeadStatus(leadId: string, status: Lead['status']) {
   try {
+    if (!db) {
+        console.error("Firestore is not initialized. Cannot update lead status.");
+        return { success: false, message: 'Database connection is not available.' };
+    }
     const leadRef = doc(db, 'leads', leadId);
     await updateDoc(leadRef, { status });
 
@@ -241,6 +245,10 @@ export async function updateLeadStatus(leadId: string, status: Lead['status']) {
 
 export async function createLead(leadData: { name: string, phone: string, vehicle: string, campaignId: string, sourceId: string }) {
     try {
+        if (!db) {
+            console.error("Firestore is not initialized. Cannot create lead.");
+            return { success: false, message: 'Database connection is not available.' };
+        }
         const [campaignSources, places] = await Promise.all([
             readData<CampaignSource[]>('campaignSources.json'),
             readData<Place[]>('places.json')

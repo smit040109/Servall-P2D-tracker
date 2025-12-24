@@ -1,6 +1,6 @@
-import { initializeApp, getApps } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
+import { getFirestore, type Firestore } from "firebase/firestore";
+import { getAuth, type Auth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,19 +11,26 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Check if all required environment variables are present
-if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-  throw new Error("Missing Firebase configuration. Please check your .env.local file.");
-}
+let app: FirebaseApp | undefined;
+let db: Firestore | null = null;
+let auth: Auth | null = null;
 
-// Initialize Firebase
-let app;
-if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
+// Check if all required environment variables are present on the client
+if (typeof window !== 'undefined' && (!firebaseConfig.apiKey || !firebaseConfig.projectId)) {
+  console.warn("Missing Firebase configuration. Please check your .env.local file. Firebase features will be disabled.");
 } else {
-    app = getApps()[0];
+  // Initialize Firebase
+  if (!getApps().length) {
+      app = initializeApp(firebaseConfig);
+  } else {
+      app = getApps()[0];
+  }
+
+  if(app) {
+    db = getFirestore(app);
+    auth = getAuth(app);
+  }
 }
 
 
-export const db = getFirestore(app);
-export const auth = getAuth(app);
+export { db, auth };
