@@ -3,7 +3,7 @@ import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place, Campaig
 import { promises as fs } from 'fs';
 import path from 'path';
 import { db } from '@/firebase/firebase';
-import { collection, query, where, getDocs, Timestamp, DocumentData } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp, DocumentData, orderBy } from 'firebase/firestore';
 
 
 // Helper function to read data from JSON files
@@ -129,7 +129,8 @@ export async function getAllLeads(): Promise<Lead[]> {
     const placeMap = new Map(places.map(p => [p.id, p.name]));
 
     const leadsRef = collection(db, 'leads');
-    const querySnapshot = await getDocs(leadsRef);
+    const q = query(leadsRef, orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => {
       const data = doc.data();
       const campaignName = campaignMap.get(data.campaignId);
