@@ -8,6 +8,12 @@ async function readData<T>(filename: string): Promise<T> {
   const filePath = path.join(process.cwd(), 'src', 'lib', 'data', filename);
   try {
     const fileContent = await fs.readFile(filePath, 'utf-8');
+    // If the file is empty, return the default empty state for that type
+    if (fileContent.trim() === '') {
+        const defaultDataPath = path.join(process.cwd(), 'src', 'lib', 'data', `default-${filename}`);
+        const defaultFileContent = await fs.readFile(defaultDataPath, 'utf-8');
+        return JSON.parse(defaultFileContent);
+    }
     return JSON.parse(fileContent);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
@@ -27,6 +33,11 @@ async function readData<T>(filename: string): Promise<T> {
   }
 }
 
+async function writeData(filename: string, data: any): Promise<void> {
+  const filePath = path.join(process.cwd(), 'src', 'lib', 'data', filename);
+  await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
+}
+
 
 export async function getCampaigns(): Promise<Campaign[]> {
   return await readData<Campaign[]>('campaigns.json');
@@ -43,11 +54,17 @@ export async function getLeadByPhone(phone: string): Promise<Lead | undefined> {
 }
 
 export async function getAdminAnalytics(): Promise<AnalyticsData> {
-    const franchises = await getFranchises();
+    const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
+    const leads = await readData<Lead[]>('leads.json');
+    
+    const totalScans = campaignSources.reduce((sum, s) => sum + s.scans, 0);
+    const totalLeads = leads.length;
+    const successfullyEncashed = leads.filter(l => l.status === 'encashed').length;
+
     const analyticsData: AnalyticsData = {
-        totalScans: franchises.reduce((sum, f) => sum + f.totalScans, 0),
-        totalLeads: franchises.reduce((sum, f) => sum + f.totalLeads, 0),
-        successfullyEncashed: franchises.reduce((sum, f) => sum + f.successfullyEncashed, 0),
+        totalScans,
+        totalLeads,
+        successfullyEncashed,
         leadsOverTime: [
             { date: 'Oct 1', leads: 50, encashed: 20 },
             { date: 'Oct 2', leads: 75, encashed: 35 },
@@ -92,10 +109,14 @@ export async function getLocationLeads(): Promise<LocationLead[]> {
 }
 
 export async function getBranchAnalytics(branchId: string): Promise<AnalyticsData> {
-    const franchise = (await getFranchises()).find(f => f.id === branchId);
-    if (!franchise) {
-        return { totalScans: 0, totalLeads: 0, successfullyEncashed: 0, leadsOverTime: [] };
-    }
+    const campaigns = (await getCampaigns()).filter(c => c.branchId === branchId);
+    const campaignIds = campaigns.map(c => c.id);
+    const allCampaignSources = await readData<CampaignSource[]>('campaignSources.json');
+    const branchCampaignSources = allCampaignSources.filter(cs => campaignIds.includes(cs.campaignId));
+    
+    const totalScans = branchCampaignSources.reduce((sum, cs) => sum + cs.scans, 0);
+    const totalLeads = branchCampaignSources.reduce((sum, cs) => sum + cs.leads, 0);
+    const successfullyEncashed = branchCampaignSources.reduce((sum, cs) => sum + cs.encashed, 0);
 
     const leadsOverTime = [ // mock data
         { date: 'Oct 1', leads: 50, encashed: 20 },
@@ -108,10 +129,9 @@ export async function getBranchAnalytics(branchId: string): Promise<AnalyticsDat
     ];
 
     return {
-        ...franchise,
-        totalScans: franchise.totalScans,
-        totalLeads: franchise.totalLeads,
-        successfullyEncashed: franchise.successfullyEncashed,
+        totalScans,
+        totalLeads,
+        successfullyEncashed,
         leadsOverTime: leadsOverTime.map(d => ({...d, leads: Math.floor(d.leads/3), encashed: Math.floor(d.encashed/3)})) // mock scaled data
     };
 }
@@ -155,12 +175,12 @@ export async function createLead(leadData: Omit<Lead, 'id' | 'createdAt' | 'stat
         leads.push(newLead);
         await writeData('leads.json', leads);
 
-        // Also increment scan count (for simplicity, we increment scan on lead creation)
-        if(newLead.campaignId) {
+        // Also increment scan and lead count
+        if(newLead.campaignId && newLead.sourceId) {
              const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
              const source = campaignSources.find(cs => cs.campaignId === newLead.campaignId && cs.sourceId === newLead.sourceId);
              if (source) {
-                 source.scans++;
+                 source.scans++; // Increment scan on lead creation for simplicity
                  source.leads++;
                  await writeData('campaignSources.json', campaignSources);
              }

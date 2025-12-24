@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { promises as fs } from 'fs';
 import path from 'path';
-import type { Campaign, Place, CampaignSource, Discount, Franchise } from './types';
+import type { Campaign, Place, CampaignSource, Discount, Franchise, Lead } from './types';
 
 // Helper function to read data from JSON files
 async function readData<T>(filename: string): Promise<T> {
@@ -118,11 +118,13 @@ export async function addSourceToCampaign(formData: FormData) {
     try {
         const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
         const campaignId = formData.get('campaignId') as string;
-        
+        const sourceId = formData.get('sourceId') as string;
+
+        // Create a new campaign source document. This ensures it's always an "add" operation.
         const newSource: CampaignSource = {
-            id: `cs_${Date.now()}`,
+            id: `cs_${Date.now()}`, // Unique ID for this specific campaign-place instance
             campaignId: campaignId,
-            sourceId: formData.get('sourceId') as string,
+            sourceId: sourceId, // The ID of the master "Place"
             scans: 0,
             leads: 0,
             encashed: 0,
@@ -134,6 +136,7 @@ export async function addSourceToCampaign(formData: FormData) {
         return { success: true, message: 'Source added to campaign successfully.' };
 
     } catch (error) {
+        console.error("Error adding source to campaign:", error);
         return { success: false, message: 'Failed to add source to campaign.' };
     }
 }
@@ -203,4 +206,38 @@ export async function deleteBranch(branchId: string) {
     } catch (error) {
         return { success: false, message: 'Failed to delete branch.' };
     }
+}
+
+
+// --- Lead Actions ---
+export async function updateLeadStatus(leadId: string, status: Lead['status']) {
+  try {
+    const leads = await readData<Lead[]>('leads.json');
+    const leadIndex = leads.findIndex(l => l.id === leadId);
+
+    if (leadIndex === -1) {
+      return { success: false, message: 'Lead not found.' };
+    }
+
+    leads[leadIndex].status = status;
+
+    if (status === 'encashed') {
+        const lead = leads[leadIndex];
+        const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
+        const sourceIndex = campaignSources.findIndex(cs => cs.campaignId === lead.campaignId && cs.sourceId === lead.sourceId);
+
+        if (sourceIndex > -1) {
+            campaignSources[sourceIndex].encashed++;
+        }
+        await writeData('campaignSources.json', campaignSources);
+    }
+    
+    await writeData('leads.json', leads);
+    revalidatePath('/branch');
+    return { success: true, message: `Lead status updated to ${status}.` };
+
+  } catch (error) {
+    console.error('Failed to update lead status:', error);
+    return { success: false, message: 'Failed to update lead status.' };
+  }
 }

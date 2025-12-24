@@ -10,6 +10,7 @@ import { getLeadByPhone } from '@/lib/data';
 import { Badge } from '../ui/badge';
 import { OtpDialog } from './otp-dialog';
 import { format } from 'date-fns';
+import { updateLeadStatus } from '@/lib/actions';
 
 export default function LeadManagement() {
   const [phone, setPhone] = useState('');
@@ -29,9 +30,12 @@ export default function LeadManagement() {
     setIsLoading(false);
   };
 
-  const handleVerified = () => {
+  const handleVerified = async () => {
     if (lead) {
-      setLead({ ...lead, status: 'encashed' });
+      const result = await updateLeadStatus(lead.id, 'encashed');
+      if (result.success) {
+        setLead({ ...lead, status: 'encashed' });
+      }
     }
   };
 

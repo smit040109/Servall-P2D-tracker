@@ -80,18 +80,22 @@ export function CampaignSourcesTable({ campaignSources, allPlaces, campaign }: C
 
   const getPlaceDetails = (placeId: string) => allPlaces.find(p => p.id === placeId);
 
-  const getQrCodeUrl = (campaignId: string, place: Place) => {
+  const getQrCodeUrl = (campaignId: string, sourceId: string) => {
     const siteUrl = typeof window !== 'undefined' 
       ? window.location.origin 
       : 'https://your-app-domain.com';
 
+    const place = getPlaceDetails(sourceId);
+    if (!place) return '';
+    
     const category = place.category.toLowerCase().replace(/\s+/g, '_');
     const location = place.name.toLowerCase().replace(/\s+/g, '_');
       
-    const fullUrl = `${siteUrl}/campaign/${campaignId}?category=${category}&location=${location}&sourceId=${place.id}`;
+    const fullUrl = `${siteUrl}/campaign/${campaignId}?category=${category}&location=${location}&sourceId=${sourceId}`;
     return `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(fullUrl)}&size=256x256&bgcolor=ffffff`;
   }
 
+  // Filter places that are not yet added to this specific campaign
   const availablePlaces = allPlaces.filter(p => !campaignSources.some(cs => cs.sourceId === p.id));
 
   return (
@@ -100,7 +104,7 @@ export function CampaignSourcesTable({ campaignSources, allPlaces, campaign }: C
         <CardTitle>Offline Places</CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-1" disabled={availablePlaces.length === 0}>
+            <Button size="sm" className="gap-1" disabled={allPlaces.length === 0}>
               <PlusCircle className="h-4 w-4" />
               Add Place
             </Button>
@@ -109,7 +113,7 @@ export function CampaignSourcesTable({ campaignSources, allPlaces, campaign }: C
             <DialogHeader>
               <DialogTitle>Add Place to Campaign</DialogTitle>
               <DialogDescription>
-                Select a place to generate a unique QR code for this campaign.
+                Select a place to generate a unique QR code for this campaign. Each added place gets a new QR code.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleAddSource} className="grid gap-4 py-4">
@@ -122,7 +126,7 @@ export function CampaignSourcesTable({ campaignSources, allPlaces, campaign }: C
                     <SelectValue placeholder="Select a place" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availablePlaces.map(place => (
+                    {allPlaces.map(place => (
                       <SelectItem key={place.id} value={place.id}>{place.name} ({place.category})</SelectItem>
                     ))}
                   </SelectContent>
@@ -173,7 +177,7 @@ export function CampaignSourcesTable({ campaignSources, allPlaces, campaign }: C
                         </DialogHeader>
                         <div className="p-4 flex items-center justify-center bg-white rounded-md">
                            <Image 
-                             src={getQrCodeUrl(cs.campaignId, place)}
+                             src={getQrCodeUrl(cs.campaignId, cs.sourceId)}
                              width={256}
                              height={256}
                              alt={`QR Code for ${campaign.name}`}
