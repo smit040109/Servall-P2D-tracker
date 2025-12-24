@@ -11,20 +11,15 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// Initialize Firebase only if the config is valid. This prevents errors during build if env vars are missing.
 let app;
-// Initialize Firebase only if the config is valid
-if (firebaseConfig.apiKey) {
-    if (getApps().length === 0) {
-        app = initializeApp(firebaseConfig);
-    } else {
-        app = getApp();
-    }
+if (firebaseConfig.projectId) {
+    app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 } else {
+    console.warn("Firebase projectId is not set in environment variables. Firebase features will be disabled.");
     app = null;
-    console.warn("Firebase config is missing. Firebase features will be disabled. Please populate your .env.local file.");
 }
-
 
 const db = app ? getFirestore(app) : null;
 
-export { db };
+export { db, app };
