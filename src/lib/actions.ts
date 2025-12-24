@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { promises as fs } from 'fs';
 import path from 'path';
 import type { Campaign, Place, CampaignSource, Discount, Franchise, Lead } from './types';
-import { db } from '@/firebase/firebase';
+import { getDb } from '@/firebase/firebase';
 import { addDoc, collection, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
 
 // Helper function to read data from JSON files
@@ -213,11 +213,13 @@ export async function deleteBranch(branchId: string) {
 
 // --- Lead Actions ---
 export async function updateLeadStatus(leadId: string, status: Lead['status']) {
+  const db = getDb();
+  if (!db) {
+    console.error("Firestore is not initialized. Cannot update lead status.");
+    return { success: false, message: 'Database connection is not available.' };
+  }
+  
   try {
-    if (!db) {
-        console.error("Firestore is not initialized. Cannot update lead status.");
-        return { success: false, message: 'Database connection is not available.' };
-    }
     const leadRef = doc(db, 'leads', leadId);
     await updateDoc(leadRef, { status });
 
@@ -244,6 +246,7 @@ export async function updateLeadStatus(leadId: string, status: Lead['status']) {
 }
 
 export async function createLead(leadData: { name: string, phone: string, vehicle: string, campaignId: string, sourceId: string }) {
+    const db = getDb();
     if (!db) {
         console.error("Firestore is not initialized. Cannot create lead.");
         return { success: false, message: 'Database connection is not available.' };
