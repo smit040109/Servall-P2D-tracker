@@ -155,8 +155,12 @@ export async function getBranchAnalytics(branchId: string): Promise<AnalyticsDat
     const branchCampaignSources = allCampaignSources.filter(cs => campaignIds.includes(cs.campaignId));
     
     const totalScans = branchCampaignSources.reduce((sum, cs) => sum + cs.scans, 0);
-    const totalLeads = branchCampaignSources.reduce((sum, cs) => sum + cs.leads, 0);
-    const successfullyEncashed = branchCampaignSources.reduce((sum, cs) => sum + cs.encashed, 0);
+    const allLeads = await getAllLeads();
+    const branchLeads = allLeads.filter(l => campaignIds.includes(l.campaignId));
+
+    const totalLeads = branchLeads.length;
+    const successfullyEncashed = branchLeads.filter(l => l.status === 'encashed').length;
+
 
     const leadsOverTime = [ // mock data
         { date: 'Oct 1', leads: 50, encashed: 20 },
@@ -195,10 +199,16 @@ export async function getCampaignSources(campaignId: string): Promise<CampaignSo
 
 export async function getCampaignSourceStats(campaignId: string) {
     const sources = await getCampaignSources(campaignId);
-    return sources.reduce((acc, source) => {
-        acc.scans += source.scans;
-        acc.leads += source.leads;
-        acc.encashed += source.encashed;
-        return acc;
-    }, { scans: 0, leads: 0, encashed: 0 });
+    const allLeads = await getAllLeads();
+    const campaignLeads = allLeads.filter(l => l.campaignId === campaignId);
+
+    const campaignSourceIds = sources.map(s => s.id);
+    const relevantLeads = campaignLeads.filter(l => l.sourceId && campaignSourceIds.includes(l.sourceId));
+
+
+    const scans = sources.reduce((acc, source) => acc + source.scans, 0);
+    const leads = relevantLeads.length;
+    const encashed = relevantLeads.filter(l => l.status === 'encashed').length;
+
+    return { scans, leads, encashed };
 }
