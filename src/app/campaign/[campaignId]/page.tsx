@@ -19,6 +19,7 @@ import { Car, Loader2 } from 'lucide-react';
 import React from 'react';
 import Logo from '@/components/logo';
 import { useSearchParams } from 'next/navigation';
+import { createLead } from '@/lib/data';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -31,6 +32,7 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
   const searchParams = useSearchParams();
   const category = searchParams.get('category');
   const location = searchParams.get('location');
+  const sourceId = searchParams.get('sourceId');
 
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -47,26 +49,41 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     
-    // In a real app, you would save this lead data to your database
+    if (!category || !location || !sourceId) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Missing tracking information from QR code."
+        });
+        setIsSubmitting(false);
+        return;
+    }
+
     const leadData = { 
       ...values, 
       campaignId: params.campaignId, 
       category: category,
       location: location,
-      // In a real implementation, you might fetch campaign name, city, etc. here
-      // or associate them on the backend using the campaignId.
+      sourceId: sourceId
     };
-    console.log("Lead data captured:", leadData);
 
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const result = await createLead(leadData);
+
+    if (result.success) {
+        toast({
+            title: 'Success!',
+            description: 'Your details have been submitted. Our team will contact you shortly.',
+        });
+        form.reset();
+    } else {
+         toast({
+            variant: "destructive",
+            title: "Submission Failed",
+            description: "Could not save your details. Please try again.",
+        });
+    }
     
     setIsSubmitting(false);
-    form.reset();
-
-    toast({
-      title: 'Success!',
-      description: 'Your details have been submitted. Our team will contact you shortly.',
-    });
   }
 
   return (

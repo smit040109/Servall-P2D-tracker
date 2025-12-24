@@ -36,6 +36,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PlusCircle, Loader2, Trash2, ArrowRight } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import type { Campaign, Franchise, Discount } from "@/lib/types"
+import { useToast } from "@/hooks/use-toast"
+import { createCampaign, deleteCampaign } from "@/lib/actions"
 
 type CampaignsTableProps = {
   campaigns: Campaign[],
@@ -46,10 +48,10 @@ type CampaignsTableProps = {
 export function CampaignsTable({ campaigns, branches, discounts }: CampaignsTableProps) {
   const [open, setOpen] = React.useState(false);
   const [isCreating, setIsCreating] = React.useState(false);
+  const { toast } = useToast();
   
   const [campaignStats, setCampaignStats] = React.useState<Record<string, { scans: number, leads: number, encashed: number }>>({});
   
-  // This is a temporary solution to show stats. In a real app, this would be part of the initial data fetch.
   React.useEffect(() => {
     async function fetchStats() {
         const stats: Record<string, { scans: number, leads: number, encashed: number }> = {};
@@ -68,16 +70,26 @@ export function CampaignsTable({ campaigns, branches, discounts }: CampaignsTabl
   async function handleCreateCampaign(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsCreating(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    const formData = new FormData(event.currentTarget);
+    const result = await createCampaign(formData);
+
+    if (result.success) {
+      toast({ title: "Success!", description: result.message });
+      setOpen(false);
+    } else {
+      toast({ variant: "destructive", title: "Error", description: result.message });
+    }
     setIsCreating(false);
-    setOpen(false);
-    // In a real app, you would revalidate the data here.
   }
   
   async function handleRemoveCampaign(campaignId: string) {
-    console.log("Removing campaign:", campaignId);
-    // In a real app, you would make an API call and revalidate data.
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const result = await deleteCampaign(campaignId);
+    if (result.success) {
+      toast({ title: "Success!", description: result.message });
+    } else {
+      toast({ variant: "destructive", title: "Error", description: result.message });
+    }
   }
 
   const getBranchName = (branchId: string) => branches.find(b => b.id === branchId)?.name || 'N/A';
@@ -107,7 +119,7 @@ export function CampaignsTable({ campaigns, branches, discounts }: CampaignsTabl
                 <Label htmlFor="name" className="text-right">
                   Name
                 </Label>
-                <Input id="name" placeholder="e.g. Surat Offline Campaign" className="col-span-3" required />
+                <Input name="name" id="name" placeholder="e.g. Surat Offline Campaign" className="col-span-3" required />
               </div>
                <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="city" className="text-right">
@@ -118,9 +130,9 @@ export function CampaignsTable({ campaigns, branches, discounts }: CampaignsTabl
                     <SelectValue placeholder="Select a city" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="surat">Surat</SelectItem>
-                    <SelectItem value="bangalore">Bangalore</SelectItem>
-                    <SelectItem value="mumbai">Mumbai</SelectItem>
+                    <SelectItem value="Surat">Surat</SelectItem>
+                    <SelectItem value="Bangalore">Bangalore</SelectItem>
+                    <SelectItem value="Mumbai">Mumbai</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

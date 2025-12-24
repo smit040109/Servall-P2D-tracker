@@ -1,0 +1,6 @@
+
+[
+    { "id": "fran_1", "name": "Koramangala", "totalScans": 430, "totalLeads": 120, "successfullyEncashed": 70 },
+    { "id": "fran_2", "name": "Indiranagar", "totalScans": 980, "totalLeads": 620, "successfullyEncashed": 310 },
+    { "id": "fran_3", "name": "HSR Layout", "totalScans": 1500, "totalLeads": 1100, "successfullyEncashed": 700 }
+]

@@ -1,0 +1,11 @@
+
+[
+    { "id": "place_1", "name": "ABC Salon", "category": "Salon" },
+    { "id": "place_2", "name": "XYZ Salon", "category": "Salon" },
+    { "id": "place_3", "name": "Gold's Gym", "category": "Gym" },
+    { "id": "place_4", "name": "Local Kirana Store", "category": "Local Shop" },
+    { "id": "place_5", "name": "Sangeet Dance Academy", "category": "Dance Class" },
+    { "id": "place_6", "name": "PVR Cinemas", "category": "Theatre" },
+    { "id": "place_7", "name": "Prestige Apartments", "category": "Apartment" },
+    { "id": "place_8", "name": "Phoenix Mall", "category": "Mall" }
+]

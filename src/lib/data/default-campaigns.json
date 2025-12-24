@@ -1,0 +1,6 @@
+
+[
+  { "id": "cam_1", "name": "Diwali Dhamaka Bangalore", "city": "Bangalore", "branchId": "fran_1", "discountId": "disc_1" },
+  { "id": "cam_2", "name": "Monsoon Offer Bangalore", "city": "Bangalore", "branchId": "fran_2", "discountId": "disc_2" },
+  { "id": "cam_3", "name": "New Year Special Mumbai", "city": "Mumbai", "branchId": "fran_3", "discountId": "disc_3" }
+]

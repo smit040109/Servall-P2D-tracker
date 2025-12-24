@@ -1,0 +1,6 @@
+
+[
+  { "id": "disc_1", "code": "DIWALI20", "description": "20% off on all services", "type": "percentage", "value": 20, "status": "active" },
+  { "id": "disc_2", "code": "MONSOON500", "description": "₹500 flat off on bills above ₹2000", "type": "fixed", "value": 500, "status": "active" },
+  { "id": "disc_3", "code": "NEWYEAR15", "description": "15% off on ceramic coating", "type": "percentage", "value": 15, "status": "inactive" }
+]

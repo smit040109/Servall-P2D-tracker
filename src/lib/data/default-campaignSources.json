@@ -1,0 +1,7 @@
+
+[
+    {"id": "cs_1", "campaignId": "cam_1", "sourceId": "place_1", "scans": 150, "leads": 42, "encashed": 20},
+    {"id": "cs_2", "campaignId": "cam_1", "sourceId": "place_2", "scans": 80, "leads": 18, "encashed": 10},
+    {"id": "cs_3", "campaignId": "cam_1", "sourceId": "place_3", "scans": 200, "leads": 60, "encashed": 40},
+    {"id": "cs_4", "campaignId": "cam_2", "sourceId": "place_8", "scans": 500, "leads": 95, "encashed": 55}
+]

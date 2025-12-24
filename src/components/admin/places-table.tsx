@@ -37,10 +37,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import type { Place } from "@/lib/types"
 import { Badge } from "../ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
+import { useToast } from "@/hooks/use-toast"
+import { createPlace, deletePlace } from "@/lib/actions"
 
 export function PlacesTable({ places }: { places: Place[] }) {
   const [open, setOpen] = React.useState(false);
   const [isCreating, setIsCreating] = React.useState(false);
+  const { toast } = useToast();
 
   const placeCategories = [
     'Salon', 'Gym', 'Local Shop', 'Dance Class', 'Theatre', 
@@ -50,16 +53,27 @@ export function PlacesTable({ places }: { places: Place[] }) {
   async function handleCreatePlace(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsCreating(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    const formData = new FormData(event.currentTarget);
+    const result = await createPlace(formData);
+
+    if (result.success) {
+      toast({ title: "Success!", description: result.message });
+      setOpen(false);
+    } else {
+      toast({ variant: "destructive", title: "Error", description: result.message });
+    }
+    
     setIsCreating(false);
-    setOpen(false);
-    // In a real app, you would revalidate the data here.
   }
 
   async function handleRemovePlace(placeId: string) {
-    console.log("Removing place:", placeId);
-    // In a real app, you would make an API call and revalidate data.
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const result = await deletePlace(placeId);
+    if (result.success) {
+      toast({ title: "Success!", description: result.message });
+    } else {
+      toast({ variant: "destructive", title: "Error", description: result.message });
+    }
   }
 
 
@@ -86,7 +100,7 @@ export function PlacesTable({ places }: { places: Place[] }) {
                 <Label htmlFor="name" className="text-right">
                   Name
                 </Label>
-                <Input id="name" placeholder="e.g. ABC Salon" className="col-span-3" required />
+                <Input id="name" name="name" placeholder="e.g. ABC Salon" className="col-span-3" required />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="category" className="text-right">

@@ -34,24 +34,38 @@ import { Label } from "@/components/ui/label"
 import { PlusCircle, Loader2, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import type { Franchise } from "@/lib/types"
+import { useToast } from "@/hooks/use-toast"
+import { createBranch, deleteBranch } from "@/lib/actions"
 
 export function BranchesTable({ branches }: { branches: Franchise[] }) {
   const [open, setOpen] = React.useState(false);
   const [isCreating, setIsCreating] = React.useState(false);
+  const { toast } = useToast();
 
   async function handleCreateBranch(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsCreating(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    const formData = new FormData(event.currentTarget);
+    const result = await createBranch(formData);
+
+    if (result.success) {
+      toast({ title: "Success!", description: result.message });
+      setOpen(false);
+    } else {
+      toast({ variant: "destructive", title: "Error", description: result.message });
+    }
+
     setIsCreating(false);
-    setOpen(false);
-    // In a real app, you would revalidate the data here.
   }
 
   async function handleRemoveBranch(branchId: string) {
-    console.log("Removing branch:", branchId);
-    // In a real app, you would make an API call and revalidate data.
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const result = await deleteBranch(branchId);
+    if (result.success) {
+      toast({ title: "Success!", description: result.message });
+    } else {
+      toast({ variant: "destructive", title: "Error", description: result.message });
+    }
   }
 
 
@@ -78,7 +92,7 @@ export function BranchesTable({ branches }: { branches: Franchise[] }) {
                 <Label htmlFor="name" className="text-right">
                   Name
                 </Label>
-                <Input id="name" placeholder="e.g. Jayanagar" className="col-span-3" required />
+                <Input id="name" name="name" placeholder="e.g. Jayanagar" className="col-span-3" required />
               </div>
                <Button type="submit" disabled={isCreating}>
                  {isCreating ? <Loader2 className="animate-spin"/> : "Add Branch"}

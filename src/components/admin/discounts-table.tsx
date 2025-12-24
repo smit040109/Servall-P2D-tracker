@@ -25,18 +25,29 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import type { Discount } from "@/lib/types"
 import { Badge } from "../ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
+import { useToast } from "@/hooks/use-toast"
+import { createDiscount } from "@/lib/actions"
 
 export function DiscountsTable({ discounts }: { discounts: Discount[] }) {
   const [open, setOpen] = React.useState(false);
   const [isCreating, setIsCreating] = React.useState(false);
+  const { toast } = useToast();
 
   async function handleCreateDiscount(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsCreating(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    const formData = new FormData(event.currentTarget);
+    const result = await createDiscount(formData);
+    
+    if (result.success) {
+      toast({ title: "Success!", description: result.message });
+      setOpen(false);
+    } else {
+      toast({ variant: "destructive", title: "Error", description: result.message });
+    }
+
     setIsCreating(false);
-    setOpen(false);
-    // In a real app, you would revalidate the data here.
   }
 
   const getStatusBadge = (status: Discount['status']) => {
@@ -71,19 +82,19 @@ export function DiscountsTable({ discounts }: { discounts: Discount[] }) {
                 <Label htmlFor="code" className="text-right">
                   Code
                 </Label>
-                <Input id="code" placeholder="e.g. SUMMER25" className="col-span-3" required />
+                <Input id="code" name="code" placeholder="e.g. SUMMER25" className="col-span-3" required />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="description" className="text-right">
                   Description
                 </Label>
-                <Input id="description" placeholder="e.g. 25% off" className="col-span-3" required />
+                <Input id="description" name="description" placeholder="e.g. 25% off" className="col-span-3" required />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="type" className="text-right">
                   Type
                 </Label>
-                <Select required>
+                <Select required name="type">
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select a type" />
                   </SelectTrigger>
@@ -97,7 +108,7 @@ export function DiscountsTable({ discounts }: { discounts: Discount[] }) {
                 <Label htmlFor="value" className="text-right">
                   Value
                 </Label>
-                <Input id="value" type="number" placeholder="e.g. 25" className="col-span-3" required />
+                <Input id="value" name="value" type="number" placeholder="e.g. 25" className="col-span-3" required />
               </div>
                <Button type="submit" disabled={isCreating}>
                  {isCreating ? <Loader2 className="animate-spin"/> : "Create Discount"}

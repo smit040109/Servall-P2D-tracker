@@ -1,55 +1,103 @@
 
 import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place, CampaignSource, CategoryLead, LocationLead } from './types';
+import { promises as fs } from 'fs';
+import path from 'path';
 
-const discounts: Discount[] = [
-  { id: 'disc_1', code: 'DIWALI20', description: '20% off on all services', type: 'percentage', value: 20, status: 'active' },
-  { id: 'disc_2', code: 'MONSOON500', description: '₹500 flat off on bills above ₹2000', type: 'fixed', value: 500, status: 'active' },
-  { id: 'disc_3', code: 'NEWYEAR15', description: '15% off on ceramic coating', type: 'percentage', value: 15, status: 'inactive' },
-];
+// Helper function to read data from JSON files
+async function readData<T>(filename: string): Promise<T> {
+  const filePath = path.join(process.cwd(), 'src', 'lib', 'data', filename);
+  try {
+    const fileContent = await fs.readFile(filePath, 'utf-8');
+    return JSON.parse(fileContent);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        // If the file doesn't exist, create it with default data
+        const defaultDataPath = path.join(process.cwd(), 'src', 'lib', 'data', `default-${filename}`);
+        try {
+            const defaultFileContent = await fs.readFile(defaultDataPath, 'utf-8');
+            await fs.writeFile(filePath, defaultFileContent, 'utf-8');
+            return JSON.parse(defaultFileContent);
+        } catch (readError) {
+            console.error(`Error reading default data for ${filename}:`, readError);
+            return [] as T;
+        }
+    }
+    console.error(`Error reading ${filename}:`, error);
+    return [] as T;
+  }
+}
 
-const places: Place[] = [
-    { id: 'place_1', name: 'ABC Salon', category: 'Salon' },
-    { id: 'place_2', name: 'XYZ Salon', category: 'Salon' },
-    { id: 'place_3', name: 'Gold\'s Gym', category: 'Gym' },
-    { id: 'place_4', name: 'Local Kirana Store', category: 'Local Shop' },
-    { id: 'place_5', name: 'Sangeet Dance Academy', category: 'Dance Class' },
-    { id: 'place_6', name: 'PVR Cinemas', category: 'Theatre' },
-    { id: 'place_7', name: 'Prestige Apartments', category: 'Apartment' },
-    { id: 'place_8', name: 'Phoenix Mall', category: 'Mall' },
-];
 
+export async function getCampaigns(): Promise<Campaign[]> {
+  return await readData<Campaign[]>('campaigns.json');
+}
 
-const campaigns: Campaign[] = [
-  { id: 'cam_1', name: 'Diwali Dhamaka Bangalore', city: 'Bangalore', branchId: 'fran_1', discountId: 'disc_1' },
-  { id: 'cam_2', name: 'Monsoon Offer Bangalore', city: 'Bangalore', branchId: 'fran_2', discountId: 'disc_2' },
-  { id: 'cam_3', name: 'New Year Special Mumbai', city: 'Mumbai', branchId: 'fran_3', discountId: 'disc_3' },
-];
+export async function getCampaignById(campaignId: string): Promise<Campaign | undefined> {
+    const campaigns = await getCampaigns();
+    return campaigns.find(c => c.id === campaignId);
+}
 
-const campaignSources: CampaignSource[] = [
-    {id: 'cs_1', campaignId: 'cam_1', sourceId: 'place_1', scans: 150, leads: 42, encashed: 20},
-    {id: 'cs_2', campaignId: 'cam_1', sourceId: 'place_2', scans: 80, leads: 18, encashed: 10},
-    {id: 'cs_3', campaignId: 'cam_1', sourceId: 'place_3', scans: 200, leads: 60, encashed: 40},
-    {id: 'cs_4', campaignId: 'cam_2', sourceId: 'place_8', scans: 500, leads: 95, encashed: 55},
-]
+export async function getLeadByPhone(phone: string): Promise<Lead | undefined> {
+    const leads = await readData<Lead[]>('leads.json');
+    return leads.find(lead => lead.phone === phone);
+}
 
-const leads: Lead[] = [
-  { id: 'lead_1', name: 'Ravi Kumar', phone: '9876543210', vehicle: 'Maruti Swift', status: 'pending', campaignId: 'cam_1', sourceId: 'place_1', createdAt: '2023-10-15T10:00:00Z', category: 'Salon', location: 'abc_salon' },
-  { id: 'lead_2', name: 'Sunita Sharma', phone: '9876543211', vehicle: 'Hyundai i20', status: 'encashed', campaignId: 'cam_2', sourceId: 'place_8', createdAt: '2023-10-16T11:30:00Z', category: 'Mall', location: 'phoenix_mall' },
-  { id: 'lead_3', name: 'Amit Patel', phone: '9876543212', vehicle: 'Honda City', status: 'pending', campaignId: 'cam_1', sourceId: 'place_3', createdAt: '2023-10-17T14:00:00Z', category: 'Gym', location: 'golds_gym' },
-  { id: 'lead_4', name: 'Priya Singh', phone: '9876543213', vehicle: 'Tata Nexon', status: 'rejected', campaignId: 'cam_1', sourceId: 'place_2', createdAt: '2023-10-18T16:45:00Z', category: 'Salon', location: 'xyz_salon' },
-];
+export async function getAdminAnalytics(): Promise<AnalyticsData> {
+    const franchises = await getFranchises();
+    const analyticsData: AnalyticsData = {
+        totalScans: franchises.reduce((sum, f) => sum + f.totalScans, 0),
+        totalLeads: franchises.reduce((sum, f) => sum + f.totalLeads, 0),
+        successfullyEncashed: franchises.reduce((sum, f) => sum + f.successfullyEncashed, 0),
+        leadsOverTime: [
+            { date: 'Oct 1', leads: 50, encashed: 20 },
+            { date: 'Oct 2', leads: 75, encashed: 35 },
+            { date: 'Oct 3', leads: 60, encashed: 40 },
+            { date: 'Oct 4', leads: 90, encashed: 55 },
+            { date: 'Oct 5', leads: 110, encashed: 70 },
+            { date: 'Oct 6', leads: 85, encashed: 60 },
+            { date: 'Oct 7', leads: 120, encashed: 80 },
+        ]
+    }
+    return analyticsData;
+}
 
-const franchises: Franchise[] = [
-    { id: 'fran_1', name: 'Koramangala', totalScans: campaignSources.filter(cs => campaigns.find(c => c.id === cs.campaignId)?.branchId === 'fran_1').reduce((sum, cs) => sum + cs.scans, 0), totalLeads: 800, successfullyEncashed: 450 },
-    { id: 'fran_2', name: 'Indiranagar', totalScans: 980, totalLeads: 620, successfullyEncashed: 310 },
-    { id: 'fran_3', name: 'HSR Layout', totalScans: 1500, totalLeads: 1100, successfullyEncashed: 700 },
-];
+export async function getCategoryLeads(): Promise<CategoryLead[]> {
+    const leads = await readData<Lead[]>('leads.json');
+    const categoryCounts: Record<string, number> = {};
+    leads.forEach(lead => {
+        if (lead.category) {
+            categoryCounts[lead.category] = (categoryCounts[lead.category] || 0) + 1;
+        }
+    });
+    return Object.entries(categoryCounts).map(([category, leads]) => ({ category, leads }));
+}
 
-const analyticsData: AnalyticsData = {
-    totalScans: franchises.reduce((sum, f) => sum + f.totalScans, 0),
-    totalLeads: franchises.reduce((sum, f) => sum + f.totalLeads, 0),
-    successfullyEncashed: franchises.reduce((sum, f) => sum + f.successfullyEncashed, 0),
-    leadsOverTime: [
+export async function getLocationLeads(): Promise<LocationLead[]> {
+    const leads = await readData<Lead[]>('leads.json');
+    const places = await getPlaces();
+    const locationCounts: Record<string, { leads: number, category: string }> = {};
+
+    leads.forEach(lead => {
+        if (lead.location) {
+            const place = places.find(p => p.name.toLowerCase().replace(/\s+/g, '_') === lead.location);
+            if (place) {
+                if (!locationCounts[place.name]) {
+                    locationCounts[place.name] = { leads: 0, category: place.category };
+                }
+                locationCounts[place.name].leads++;
+            }
+        }
+    });
+    return Object.entries(locationCounts).map(([location, data]) => ({ location, leads: data.leads, category: data.category }));
+}
+
+export async function getBranchAnalytics(branchId: string): Promise<AnalyticsData> {
+    const franchise = (await getFranchises()).find(f => f.id === branchId);
+    if (!franchise) {
+        return { totalScans: 0, totalLeads: 0, successfullyEncashed: 0, leadsOverTime: [] };
+    }
+
+    const leadsOverTime = [ // mock data
         { date: 'Oct 1', leads: 50, encashed: 20 },
         { date: 'Oct 2', leads: 75, encashed: 35 },
         { date: 'Oct 3', leads: 60, encashed: 40 },
@@ -57,88 +105,32 @@ const analyticsData: AnalyticsData = {
         { date: 'Oct 5', leads: 110, encashed: 70 },
         { date: 'Oct 6', leads: 85, encashed: 60 },
         { date: 'Oct 7', leads: 120, encashed: 80 },
-    ]
-}
-
-const categoryLeads: CategoryLead[] = [
-    { category: 'Salon', leads: 120 },
-    { category: 'Gym', leads: 60 },
-    { category: 'Mall', leads: 95 },
-];
-
-const locationLeads: LocationLead[] = [
-    { location: 'ABC Salon', leads: 42, category: 'Salon' },
-    { location: 'XYZ Salon', leads: 18, category: 'Salon' },
-    { location: 'Royal Salon', leads: 65, category: 'Salon' },
-    { location: 'Gold\'s Gym', leads: 60, category: 'Gym' },
-    { location: 'Phoenix Mall', leads: 95, category: 'Mall' },
-];
-
-
-export async function getCampaigns(): Promise<Campaign[]> {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return campaigns;
-}
-
-export async function getCampaignById(campaignId: string): Promise<Campaign | undefined> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return campaigns.find(c => c.id === campaignId);
-}
-
-export async function getLeadByPhone(phone: string): Promise<Lead | undefined> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return leads.find(lead => lead.phone === phone);
-}
-
-export async function getAdminAnalytics(): Promise<AnalyticsData> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return analyticsData;
-}
-
-export async function getCategoryLeads(): Promise<CategoryLead[]> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return categoryLeads;
-}
-
-export async function getLocationLeads(): Promise<LocationLead[]> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return locationLeads;
-}
-
-export async function getBranchAnalytics(branchId: string): Promise<AnalyticsData> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const franchise = franchises.find(f => f.id === branchId);
-    if (!franchise) {
-        return { totalScans: 0, totalLeads: 0, successfullyEncashed: 0, leadsOverTime: [] };
-    }
+    ];
 
     return {
         ...franchise,
         totalScans: franchise.totalScans,
         totalLeads: franchise.totalLeads,
         successfullyEncashed: franchise.successfullyEncashed,
-        leadsOverTime: analyticsData.leadsOverTime.map(d => ({...d, leads: Math.floor(d.leads/3), encashed: Math.floor(d.encashed/3)})) // mock scaled data
+        leadsOverTime: leadsOverTime.map(d => ({...d, leads: Math.floor(d.leads/3), encashed: Math.floor(d.encashed/3)})) // mock scaled data
     };
 }
 
 export async function getFranchises(): Promise<Franchise[]> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return franchises;
+    return await readData<Franchise[]>('franchises.json');
 }
 
 export async function getDiscounts(): Promise<Discount[]> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return discounts;
+    return await readData<Discount[]>('discounts.json');
 }
 
 export async function getPlaces(): Promise<Place[]> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return places;
+    return await readData<Place[]>('places.json');
 }
 
 export async function getCampaignSources(campaignId: string): Promise<CampaignSource[]> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return campaignSources.filter(cs => cs.campaignId === campaignId);
+    const sources = await readData<CampaignSource[]>('campaignSources.json');
+    return sources.filter(cs => cs.campaignId === campaignId);
 }
 
 export async function getCampaignSourceStats(campaignId: string) {
@@ -149,4 +141,32 @@ export async function getCampaignSourceStats(campaignId: string) {
         acc.encashed += source.encashed;
         return acc;
     }, { scans: 0, leads: 0, encashed: 0 });
+}
+
+export async function createLead(leadData: Omit<Lead, 'id' | 'createdAt' | 'status'>) {
+    try {
+        const leads = await readData<Lead[]>('leads.json');
+        const newLead: Lead = {
+            id: `lead_${Date.now()}`,
+            createdAt: new Date().toISOString(),
+            status: 'pending',
+            ...leadData
+        };
+        leads.push(newLead);
+        await writeData('leads.json', leads);
+
+        // Also increment scan count (for simplicity, we increment scan on lead creation)
+        if(newLead.campaignId) {
+             const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
+             const source = campaignSources.find(cs => cs.campaignId === newLead.campaignId && cs.sourceId === newLead.sourceId);
+             if (source) {
+                 source.scans++;
+                 source.leads++;
+                 await writeData('campaignSources.json', campaignSources);
+             }
+        }
+        return { success: true, message: 'Lead created successfully' };
+    } catch(e) {
+        return { success: false, message: 'Failed to create lead' };
+    }
 }

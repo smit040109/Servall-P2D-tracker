@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import * as React from "react"
@@ -38,6 +37,8 @@ import { QrCode, PlusCircle, Loader2, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import type { CampaignSource, Place, Campaign } from "@/lib/types"
 import { Badge } from "../ui/badge"
+import { useToast } from "@/hooks/use-toast"
+import { addSourceToCampaign, deleteCampaignSource } from "@/lib/actions"
 
 type CampaignSourcesTableProps = {
     campaignSources: CampaignSource[],
@@ -48,37 +49,50 @@ type CampaignSourcesTableProps = {
 export function CampaignSourcesTable({ campaignSources, allPlaces, campaign }: CampaignSourcesTableProps) {
   const [open, setOpen] = React.useState(false);
   const [isCreating, setIsCreating] = React.useState(false);
+  const { toast } = useToast();
 
   async function handleAddSource(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsCreating(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    const formData = new FormData(event.currentTarget);
+    formData.append('campaignId', campaign.id);
+
+    const result = await addSourceToCampaign(formData);
+    if(result.success) {
+        toast({ title: "Success!", description: result.message });
+        setOpen(false);
+    } else {
+        toast({ variant: "destructive", title: "Error", description: result.message });
+    }
+    
     setIsCreating(false);
-    setOpen(false);
-    // In a real app, you would revalidate the data here.
   }
   
   async function handleRemoveSource(campaignSourceId: string) {
-    console.log("Removing source from campaign:", campaignSourceId);
-    // In a real app, you would make an API call and revalidate data.
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const result = await deleteCampaignSource(campaignSourceId, campaign.id);
+     if(result.success) {
+        toast({ title: "Success!", description: result.message });
+    } else {
+        toast({ variant: "destructive", title: "Error", description: result.message });
+    }
   }
 
   const getPlaceDetails = (placeId: string) => allPlaces.find(p => p.id === placeId);
 
   const getQrCodeUrl = (campaignId: string, place: Place) => {
-    // In a real app, this should be an absolute URL. For prototyping,
-    // we'll use the current window location if available.
     const siteUrl = typeof window !== 'undefined' 
       ? window.location.origin 
-      : 'https://your-app-domain.com'; // Fallback for server rendering
+      : 'https://your-app-domain.com';
 
     const category = place.category.toLowerCase().replace(/\s+/g, '_');
     const location = place.name.toLowerCase().replace(/\s+/g, '_');
       
-    const fullUrl = `${siteUrl}/campaign/${campaignId}?category=${category}&location=${location}`;
+    const fullUrl = `${siteUrl}/campaign/${campaignId}?category=${category}&location=${location}&sourceId=${place.id}`;
     return `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(fullUrl)}&size=256x256&bgcolor=ffffff`;
   }
+
+  const availablePlaces = allPlaces.filter(p => !campaignSources.some(cs => cs.sourceId === p.id));
 
   return (
     <Card>
@@ -86,7 +100,7 @@ export function CampaignSourcesTable({ campaignSources, allPlaces, campaign }: C
         <CardTitle>Offline Places</CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-1">
+            <Button size="sm" className="gap-1" disabled={availablePlaces.length === 0}>
               <PlusCircle className="h-4 w-4" />
               Add Place
             </Button>
@@ -108,7 +122,7 @@ export function CampaignSourcesTable({ campaignSources, allPlaces, campaign }: C
                     <SelectValue placeholder="Select a place" />
                   </SelectTrigger>
                   <SelectContent>
-                    {allPlaces.map(place => (
+                    {availablePlaces.map(place => (
                       <SelectItem key={place.id} value={place.id}>{place.name} ({place.category})</SelectItem>
                     ))}
                   </SelectContent>
