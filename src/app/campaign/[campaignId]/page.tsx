@@ -54,24 +54,23 @@ export default function CampaignLeadCapturePage({ params: paramsPromise }: { par
     },
   });
 
-  const { isSubmitting, isSubmitSuccessful } = form.formState;
+  const { isSubmitting } = form.formState;
 
   React.useEffect(() => {
-    if (isSubmitSuccessful && state.success) {
+    if (state.success) {
       toast({
           title: 'Success!',
           description: state.message,
       });
       form.reset();
-    }
-    if (!state.success && state.message) {
+    } else if (state.message) { // Handle errors
       toast({
           variant: "destructive",
           title: "Submission Failed",
           description: state.message,
       });
     }
-  }, [isSubmitSuccessful, state, form, toast]);
+  }, [state, form, toast]);
 
 
   if (!sourceId) {
