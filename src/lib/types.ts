@@ -2,6 +2,7 @@ export type Campaign = {
   id: string;
   name: string;
   branch: string;
+  place: string; // New field
   qrCodeUrl: string;
   scans: number;
   leads: number;
@@ -25,6 +26,11 @@ export type Franchise = {
   totalScans: number;
   totalLeads: number;
   successfullyEncashed: number;
+};
+
+export type Place = {
+  id: string;
+  name: string;
 };
 
 export type AnalyticsData = {

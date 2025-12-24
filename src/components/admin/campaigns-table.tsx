@@ -106,6 +106,22 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="place" className="text-right">
+                  Place
+                </Label>
+                <Select required>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a place" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gym">Gym</SelectItem>
+                    <SelectItem value="salon">Salon</SelectItem>
+                    <SelectItem value="mall">Mall</SelectItem>
+                    <SelectItem value="apartment">Apartment Complex</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
                <Button type="submit" disabled={isCreating}>
                  {isCreating ? <Loader2 className="animate-spin"/> : "Generate QR Code"}
                </Button>
@@ -119,6 +135,7 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
             <TableRow>
               <TableHead>Campaign Name</TableHead>
               <TableHead>Branch</TableHead>
+              <TableHead>Place</TableHead>
               <TableHead className="text-right">Scans</TableHead>
               <TableHead className="text-right">Leads</TableHead>
               <TableHead className="text-right">Encashed</TableHead>
@@ -130,6 +147,7 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
               <TableRow key={campaign.id}>
                 <TableCell className="font-medium">{campaign.name}</TableCell>
                 <TableCell>{campaign.branch}</TableCell>
+                <TableCell>{campaign.place}</TableCell>
                 <TableCell className="text-right">{campaign.scans.toLocaleString()}</TableCell>
                 <TableCell className="text-right">{campaign.leads.toLocaleString()}</TableCell>
                 <TableCell className="text-right">{campaign.encashed.toLocaleString()}</TableCell>

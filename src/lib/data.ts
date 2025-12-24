@@ -1,4 +1,4 @@
-import type { Campaign, Lead, Franchise, AnalyticsData, Discount } from './types';
+import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place } from './types';
 
 const discounts: Discount[] = [
   { id: 'disc_1', code: 'DIWALI20', description: '20% off on all services', type: 'percentage', value: 20, status: 'active' },
@@ -6,10 +6,18 @@ const discounts: Discount[] = [
   { id: 'disc_3', code: 'NEWYEAR15', description: '15% off on ceramic coating', type: 'percentage', value: 15, status: 'inactive' },
 ];
 
+const places: Place[] = [
+  { id: 'place_1', name: 'Gym' },
+  { id: 'place_2', name: 'Salon' },
+  { id: 'place_3', name: 'Mall' },
+  { id: 'place_4', name: 'Apartment Complex' },
+];
+
 const campaigns: Campaign[] = [
-  { id: 'cam_1', name: 'Diwali Dhamaka', branch: 'Koramangala', qrCodeUrl: '/campaign/cam_1', scans: 1250, leads: 800, encashed: 450, discountId: 'disc_1' },
-  { id: 'cam_2', name: 'Monsoon Offer', branch: 'Indiranagar', qrCodeUrl: '/campaign/cam_2', scans: 980, leads: 620, encashed: 310, discountId: 'disc_2' },
-  { id: 'cam_3', name: 'New Year Special', branch: 'HSR Layout', qrCodeUrl: '/campaign/cam_3', scans: 1500, leads: 1100, encashed: 700, discountId: 'disc_3' },
+  { id: 'cam_1', name: 'Diwali Dhamaka', branch: 'Koramangala', place: 'Gym', qrCodeUrl: '/campaign/cam_1', scans: 750, leads: 500, encashed: 250, discountId: 'disc_1' },
+  { id: 'cam_1_mall', name: 'Diwali Dhamaka', branch: 'Koramangala', place: 'Mall', qrCodeUrl: '/campaign/cam_1_mall', scans: 500, leads: 300, encashed: 200, discountId: 'disc_1' },
+  { id: 'cam_2', name: 'Monsoon Offer', branch: 'Indiranagar', place: 'Salon', qrCodeUrl: '/campaign/cam_2', scans: 980, leads: 620, encashed: 310, discountId: 'disc_2' },
+  { id: 'cam_3', name: 'New Year Special', branch: 'HSR Layout', place: 'Apartment Complex', qrCodeUrl: '/campaign/cam_3', scans: 1500, leads: 1100, encashed: 700, discountId: 'disc_3' },
 ];
 
 const leads: Lead[] = [
@@ -20,7 +28,7 @@ const leads: Lead[] = [
 ];
 
 const franchises: Franchise[] = [
-    { id: 'fran_1', name: 'Koramangala', totalScans: 1250, totalLeads: 800, successfullyEncashed: 450 },
+    { id: 'fran_1', name: 'Koramangala', totalScans: campaigns.filter(c => c.branch === 'Koramangala').reduce((sum, c) => sum + c.scans, 0), totalLeads: 800, successfullyEncashed: 450 },
     { id: 'fran_2', name: 'Indiranagar', totalScans: 980, totalLeads: 620, successfullyEncashed: 310 },
     { id: 'fran_3', name: 'HSR Layout', totalScans: 1500, totalLeads: 1100, successfullyEncashed: 700 },
 ];
@@ -80,4 +88,9 @@ export async function getFranchises(): Promise<Franchise[]> {
 export async function getDiscounts(): Promise<Discount[]> {
     await new Promise(resolve => setTimeout(resolve, 500));
     return discounts;
+}
+
+export async function getPlaces(): Promise<Place[]> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return places;
 }

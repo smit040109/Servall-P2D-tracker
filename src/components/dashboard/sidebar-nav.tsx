@@ -3,7 +3,7 @@
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type LucideIcon, LayoutDashboard, QrCode, Building, Tag } from "lucide-react";
+import { type LucideIcon, LayoutDashboard, QrCode, Building, Tag, MapPin } from "lucide-react";
 
 type NavItem = {
   href: string;
@@ -16,6 +16,7 @@ const navItemsByRole: Record<string, NavItem[]> = {
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/campaigns", label: "Campaigns", icon: QrCode },
     { href: "/admin/branches", label: "Branches", icon: Building },
+    { href: "/admin/places", label: "Places", icon: MapPin },
     { href: "/admin/discounts", label: "Discounts", icon: Tag },
   ],
   branch: [
