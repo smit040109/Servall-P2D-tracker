@@ -16,6 +16,8 @@ export type Lead = {
   campaignId: string;
   sourceId: string; // This will now refer to a Place's ID
   createdAt: string;
+  category?: string;
+  location?: string;
 };
 
 export type Franchise = {

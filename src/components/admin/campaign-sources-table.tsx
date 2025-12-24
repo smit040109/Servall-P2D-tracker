@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import * as React from "react"
@@ -65,13 +66,17 @@ export function CampaignSourcesTable({ campaignSources, allPlaces, campaign }: C
 
   const getPlaceDetails = (placeId: string) => allPlaces.find(p => p.id === placeId);
 
-  const getQrCodeUrl = (campaignId: string, sourceId: string) => {
+  const getQrCodeUrl = (campaignId: string, place: Place) => {
     // In a real app, this should be an absolute URL. For prototyping,
     // we'll use the current window location if available.
     const siteUrl = typeof window !== 'undefined' 
       ? window.location.origin 
       : 'https://your-app-domain.com'; // Fallback for server rendering
-    const fullUrl = `${siteUrl}/campaign/${campaignId}?source=${sourceId}`;
+
+    const category = place.category.toLowerCase().replace(/\s+/g, '_');
+    const location = place.name.toLowerCase().replace(/\s+/g, '_');
+      
+    const fullUrl = `${siteUrl}/campaign/${campaignId}?category=${category}&location=${location}`;
     return `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(fullUrl)}&size=256x256&bgcolor=ffffff`;
   }
 
@@ -131,6 +136,8 @@ export function CampaignSourcesTable({ campaignSources, allPlaces, campaign }: C
           <TableBody>
             {campaignSources.map((cs) => {
               const place = getPlaceDetails(cs.sourceId);
+              if (!place) return null;
+
               return (
               <TableRow key={cs.id}>
                 <TableCell className="font-medium">{place?.name || 'Unknown'}</TableCell>
@@ -152,7 +159,7 @@ export function CampaignSourcesTable({ campaignSources, allPlaces, campaign }: C
                         </DialogHeader>
                         <div className="p-4 flex items-center justify-center bg-white rounded-md">
                            <Image 
-                             src={getQrCodeUrl(cs.campaignId, cs.sourceId)}
+                             src={getQrCodeUrl(cs.campaignId, place)}
                              width={256}
                              height={256}
                              alt={`QR Code for ${campaign.name}`}
