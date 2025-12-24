@@ -66,23 +66,22 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
       
       await createLead(leadData);
       
-      console.log("Lead saved to Firestore");
       toast({
           title: 'Success!',
           description: 'Your details have been submitted. Our team will contact you shortly.',
       });
       form.reset();
 
-    } catch (error: any) { {
-        toast({
+    } catch (error: any) { 
+      console.error("🔥 FIRESTORE ERROR:", error);
+      toast({
           variant: "destructive",
           title: "Submission Failed",
           description: error.message || "Could not save your details. Please try again.",
       });
+    } finally {
+      setIsSubmitting(false);
     }
-  } finally {
-    setIsSubmitting(false);
-  }
 }
 
   return (
