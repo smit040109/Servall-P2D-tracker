@@ -8,7 +8,7 @@ export type Campaign = {
   discountId: string;
   startDate?: string | FieldValue;
   endDate?: string | FieldValue;
-  status?: "active" | "paused" | "completed";
+  status: "active" | "paused" | "completed";
   createdAt?: string | FieldValue;
 };
 
@@ -122,3 +122,12 @@ export type PlaceWithStats = Place & {
   costPerLead: number;
   costPerEncashment: number;
 }
+
+export type Staff = {
+  id: string;
+  name: string;
+  branchId: string;
+  role: 'Manager' | 'Staff';
+  totalHandled: number;
+  totalEncashed: number;
+};

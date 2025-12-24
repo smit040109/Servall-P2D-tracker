@@ -1,0 +1,6 @@
+
+[
+    { "id": "staff_1", "name": "Rajesh Kumar", "branchId": "fran_1", "role": "Manager", "totalHandled": 100, "totalEncashed": 60 },
+    { "id": "staff_2", "name": "Sita Singh", "branchId": "fran_1", "role": "Staff", "totalHandled": 80, "totalEncashed": 50 },
+    { "id": "staff_3", "name": "Arjun Sharma", "branchId": "fran_2", "role": "Manager", "totalHandled": 120, "totalEncashed": 90 }
+]
