@@ -2,7 +2,7 @@
 import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place, CampaignSource, CategoryLead, LocationLead } from './types';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { getDb } from '@/firebase/firebase';
+import { db } from '@/firebase/firebase';
 import { collection, query, where, getDocs, Timestamp, DocumentData } from 'firebase/firestore';
 
 
@@ -70,7 +70,6 @@ function convertFirestoreDocToLead(doc: DocumentData): Lead {
 
 
 export async function getLeadByPhone(phone: string): Promise<Lead | undefined> {
-    const db = getDb();
     if (!db) {
         console.warn("Firestore is not initialized. Cannot fetch lead by phone.");
         return undefined;
@@ -89,7 +88,6 @@ export async function getLeadByPhone(phone: string): Promise<Lead | undefined> {
 
 // Central function to fetch all leads from the global "leads" collection.
 async function getAllLeads(): Promise<Lead[]> {
-    const db = getDb();
     if (!db) {
         console.warn("Firestore is not initialized. Cannot fetch all leads.");
         return [];

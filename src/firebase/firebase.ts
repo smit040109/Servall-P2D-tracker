@@ -1,9 +1,9 @@
 
-import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
-import { getFirestore, type Firestore } from "firebase/firestore";
-import { getAuth, type Auth } from "firebase/auth";
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
-export const firebaseConfig = {
+const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
@@ -12,29 +12,14 @@ export const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-
-let app: FirebaseApp;
-
-// This guard prevents errors during the build process
-// and in environments where config is not yet provided.
-if (firebaseConfig.apiKey && firebaseConfig.projectId) {
-  app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+let app;
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
 } else {
-  console.warn("Firebase config is missing. Firebase features will be disabled.");
-  // Use a dummy app to avoid crashes
-  app = getApps().length ? getApp() : initializeApp({ projectId: "demo-project" });
+  app = getApp();
 }
 
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-// Functions to get services on demand
-export const getDb = (): Firestore | null => {
-    if (!firebaseConfig.apiKey || !firebaseConfig.projectId) return null;
-    return getFirestore(app);
-}
-
-export const getAuthInstance = (): Auth | null => {
-    if (!firebaseConfig.apiKey || !firebaseConfig.projectId) return null;
-    return getAuth(app);
-}
-
-export { app };
+export { db, auth };
