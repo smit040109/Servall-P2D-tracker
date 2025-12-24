@@ -253,6 +253,8 @@ export async function createLeadAction(prevState: any, formData: FormData) {
     }
     
     const { pincode, ...restOfValidatedData } = validatedFields.data;
+    const newLeadRef = doc(collection(db, "leads"));
+
 
     try {
         const [places, campaignSources, campaigns] = await Promise.all([
@@ -270,8 +272,6 @@ export async function createLeadAction(prevState: any, formData: FormData) {
         }
 
         const batch = writeBatch(db);
-        const leadsRef = collection(db, "leads");
-        const newLeadRef = doc(leadsRef);
 
         const newLead: Omit<Lead, 'id'> = {
             name: validatedFields.data.name,
@@ -334,6 +334,8 @@ export async function createLeadAction(prevState: any, formData: FormData) {
         }
 
         await batch.commit();
+
+        console.log("Lead created:", newLeadRef.id);
 
         revalidatePath('/admin'); // Revalidate admin pages to update stats
         return { success: true, message: 'Your details have been submitted successfully!' };
@@ -416,3 +418,4 @@ export async function updateLeadStatus(
     return { success: false, message: 'Failed to update lead.' };
   }
 }
+
