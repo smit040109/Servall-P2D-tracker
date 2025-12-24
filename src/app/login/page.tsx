@@ -7,7 +7,7 @@ import Logo from '@/components/logo';
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-black">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100 dark:bg-black p-4">
       <div className="absolute top-8 left-8">
         <Logo />
       </div>
@@ -37,6 +37,11 @@ export default function LoginPage() {
           </Link>
         </CardFooter>
       </Card>
+      <div className="mt-6 text-center text-sm">
+        <Link href="/pricing" className="text-muted-foreground hover:text-primary underline">
+            View Pricing Plans
+        </Link>
+      </div>
     </div>
   );
 }
