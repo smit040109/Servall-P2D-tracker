@@ -16,11 +16,10 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Car, Loader2 } from 'lucide-react';
-import React from 'react';
+import React, { useActionState } from 'react';
 import Logo from '@/components/logo';
 import { useSearchParams } from 'next/navigation';
 import { createLeadAction } from '@/lib/actions';
-import { useFormState } from 'react-dom';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -42,7 +41,7 @@ export default function CampaignLeadCapturePage({ params: paramsPromise }: { par
   const sourceId = searchParams.get('sourceId');
 
   const { toast } = useToast();
-  const [state, formAction] = useFormState(createLeadAction, initialState);
+  const [state, formAction] = useActionState(createLeadAction, initialState);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
