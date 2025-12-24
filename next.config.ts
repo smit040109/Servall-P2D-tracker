@@ -36,6 +36,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // In a future version of Next.js, you will need to explicitly configure
+  // "allowedDevOrigins" to allow cross-origin requests in development.
+  // For now, we can add it to silence the warning.
+  devServer: {
+    allowedDevOrigins: [
+      "https://*.cluster-6dx7corvpngoivimwvvljgokdw.cloudworkstations.dev"
+    ]
+  }
 };
 
 export default nextConfig;
