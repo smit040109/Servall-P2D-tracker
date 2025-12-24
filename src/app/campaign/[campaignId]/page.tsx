@@ -35,7 +35,7 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
   const searchParams = useSearchParams();
   const sourceId = searchParams.get('sourceId');
   const { toast } = useToast();
-  const { campaignId } = params;
+  const campaignId = params.campaignId;
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -169,7 +169,7 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
                         <Input placeholder="e.g., Toyota Camry" {...field} />
                         </FormControl>
                         <FormMessage />
-                    </FormItem>
+                    </Item>
                     )}
                 />
                 <FormField
