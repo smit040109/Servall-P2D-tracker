@@ -175,4 +175,3 @@ export default function CampaignLeadCapturePage({ params: paramsPromise }: { par
     </main>
   );
 }
-    
