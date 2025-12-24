@@ -4,9 +4,9 @@
 import { revalidatePath } from 'next/cache';
 import { promises as fs } from 'fs';
 import path from 'path';
-import type { Campaign, Place, CampaignSource, Discount, Franchise, Lead } from './types';
+import type { Campaign, Place, CampaignSource, Discount, Franchise, Lead, TimelineEvent } from './types';
 import { db } from '@/firebase/firebase';
-import { addDoc, collection, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, updateDoc, doc, arrayUnion } from 'firebase/firestore';
 import { format } from 'date-fns';
 
 // Helper function to read data from JSON files
@@ -227,21 +227,19 @@ export async function updateLeadStatus(leadId: string, status: Lead['status']) {
   
   try {
     const leadRef = doc(db, 'leads', leadId);
-    await updateDoc(leadRef, { status });
-
-    if (status === 'encashed') {
-      // This part still uses file system, will need to be migrated if full migration is needed.
-      // For now, we focus on leads.
-      // const lead = leads[leadIndex];
-      // const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
-      // const sourceIndex = campaignSources.findIndex(cs => cs.id === lead.sourceId);
-
-      // if (sourceIndex > -1) {
-      //     campaignSources[sourceIndex].encashed++;
-      // }
-      // await writeData('campaignSources.json', campaignSources);
-    }
     
+    const newEvent: TimelineEvent = {
+        event: 'Offer Encashed',
+        timestamp: serverTimestamp(),
+        source: 'Branch',
+        notes: `Status changed to ${status}`
+    }
+
+    await updateDoc(leadRef, { 
+        status: status,
+        timeline: arrayUnion(newEvent)
+    });
+
     revalidatePath('/branch');
     return { success: true, message: `Lead status updated to ${status}.` };
 

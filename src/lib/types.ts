@@ -8,6 +8,13 @@ export type Campaign = {
   discountId: string;
 };
 
+export type TimelineEvent = {
+  event: 'Form Submitted' | 'Offer Encashed' | 'Status Update';
+  timestamp: string | FieldValue;
+  source: 'System' | 'Branch';
+  notes?: string;
+};
+
 export type Lead = {
   id: string;
   name: string;
@@ -17,6 +24,7 @@ export type Lead = {
   campaignId: string;
   sourceId: string; // This is the ID of the CampaignSource document
   createdAt: string | FieldValue;
+  timeline: TimelineEvent[];
   category?: string;
   location?: string;
 };

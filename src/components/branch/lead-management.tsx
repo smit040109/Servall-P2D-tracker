@@ -4,13 +4,15 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, User, Phone, Car, Clock, BadgeCheck, BadgeX, BadgeHelp } from 'lucide-react';
+import { Search, Loader2, User, Phone, Car, Clock, BadgeCheck, BadgeX, BadgeHelp, FileClock } from 'lucide-react';
 import type { Lead } from '@/lib/types';
 import { getLeadByPhone } from '@/lib/data';
 import { Badge } from '../ui/badge';
 import { OtpDialog } from './otp-dialog';
 import { format } from 'date-fns';
 import { updateLeadStatus } from '@/lib/actions';
+import { LeadTimeline } from './lead-timeline';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 
 export default function LeadManagement() {
   const [phone, setPhone] = useState('');
@@ -34,7 +36,9 @@ export default function LeadManagement() {
     if (lead) {
       const result = await updateLeadStatus(lead.id, 'encashed');
       if (result.success) {
-        setLead({ ...lead, status: 'encashed' });
+        // Refetch the lead to get the updated timeline
+        const updatedLead = await getLeadByPhone(phone);
+        setLead(updatedLead || null);
       }
     }
   };
@@ -94,17 +98,32 @@ export default function LeadManagement() {
                   {getStatusBadge(lead.status)}
               </div>
             </CardHeader>
-            <CardContent className="grid md:grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-muted-foreground" /> <span>{lead.phone}</span></div>
-                <div className="flex items-center gap-2"><Car className="w-4 h-4 text-muted-foreground" /> <span>{lead.vehicle}</span></div>
-                <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-muted-foreground" /> <span>{format(new Date(lead.createdAt), "PPP")}</span></div>
+            <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-muted-foreground" /> <span>{lead.phone}</span></div>
+                    <div className="flex items-center gap-2"><Car className="w-4 h-4 text-muted-foreground" /> <span>{lead.vehicle}</span></div>
+                    <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-muted-foreground" /> <span>{format(new Date(lead.createdAt as string), "PPP")}</span></div>
+                </div>
                 {lead.status === 'pending' && (
-                    <div className="md:col-span-2 mt-4">
+                    <div className="mt-4">
                         <Button className="w-full" onClick={() => setIsOtpOpen(true)}>
                             Verify & Encash Offer
                         </Button>
                     </div>
                 )}
+                 <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="item-1">
+                    <AccordionTrigger>
+                      <div className="flex items-center gap-2 text-sm font-semibold">
+                        <FileClock className="h-4 w-4" />
+                        View Customer Journey
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <LeadTimeline timeline={lead.timeline} />
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
             </CardContent>
           </Card>
         )}

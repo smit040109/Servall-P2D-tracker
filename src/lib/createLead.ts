@@ -6,9 +6,18 @@ export async function createLead(leadData: any) {
     throw new Error("Firestore DB not initialized");
   }
 
-  return await addDoc(collection(db, "leads"), {
+  const newLead = {
     ...leadData,
     status: "pending",
     createdAt: serverTimestamp(),
-  });
+    timeline: [
+      {
+        event: "Form Submitted",
+        timestamp: serverTimestamp(),
+        source: "System",
+      },
+    ],
+  };
+
+  return await addDoc(collection(db, "leads"), newLead);
 }

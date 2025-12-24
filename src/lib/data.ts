@@ -1,5 +1,5 @@
 
-import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place, CampaignSource, CategoryLead, LocationLead, PlaceWithStats } from './types';
+import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place, CampaignSource, CategoryLead, LocationLead, PlaceWithStats, TimelineEvent } from './types';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { db } from '@/firebase/firebase';
@@ -54,6 +54,14 @@ export async function getCampaignById(campaignId: string): Promise<Campaign | un
 // Helper to convert Firestore document to a Lead object, handling Timestamps.
 function convertFirestoreDocToLead(doc: DocumentData): Lead {
     const data = doc.data();
+    
+    // Convert timeline event timestamps
+    const timeline = (data.timeline || []).map((event: any) => ({
+      ...event,
+      timestamp: (event.timestamp as Timestamp)?.toDate().toISOString() || new Date().toISOString()
+    }));
+
+
     return {
         id: doc.id,
         name: data.name,
@@ -63,6 +71,7 @@ function convertFirestoreDocToLead(doc: DocumentData): Lead {
         campaignId: data.campaignId,
         sourceId: data.sourceId,
         createdAt: (data.createdAt as Timestamp)?.toDate().toISOString() || new Date().toISOString(),
+        timeline: timeline,
         category: data.category,
         location: data.placeName,
     };
