@@ -11,16 +11,16 @@
     "id": "cs_1766576459618",
     "campaignId": "cam_1766575789001",
     "sourceId": "place_1766576439670",
-    "scans": 1,
-    "leads": 0,
+    "scans": 2,
+    "leads": 1,
     "encashed": 0
   },
   {
     "id": "cs_1766576469762",
     "campaignId": "cam_1766575789001",
     "sourceId": "place_1766576449413",
-    "scans": 0,
-    "leads": 0,
+    "scans": 1,
+    "leads": 1,
     "encashed": 0
   }
 ]
