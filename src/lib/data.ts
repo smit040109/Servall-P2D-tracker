@@ -12,11 +12,11 @@ import placesData from './data/default-places.json';
 
 // The data is now held in-memory and is not mutable via file writes.
 // All functions will return this static, default data.
-let campaigns: Campaign[] = campaignsData;
-let campaignSources: CampaignSource[] = campaignSourcesData;
-let discounts: Discount[] = discountsData;
-let franchises: Franchise[] = franchisesData;
-let places: Place[] = placesData;
+let campaigns: Campaign[] = campaignsData as Campaign[];
+let campaignSources: CampaignSource[] = campaignSourcesData as CampaignSource[];
+let discounts: Discount[] = discountsData as Discount[];
+let franchises: Franchise[] = franchisesData as Franchise[];
+let places: Place[] = placesData as Place[];
 
 
 export async function getCampaigns(): Promise<Campaign[]> {
