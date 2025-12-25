@@ -56,8 +56,8 @@ function convertFirestoreDocToLead(doc: DocumentData, campaignName?: string, pla
         pincode: data.pincode,
         status: data.status,
         campaignId: data.campaignId,
-        sourceId: data.sourceId,
-        placeId: data.placeId,
+        sourceId: data.sourceId, // This is the ID of the CampaignSource document
+        placeId: data.placeId, // ID of the master Place
         branchId: data.branchId,
         createdAt: (data.createdAt as Timestamp)?.toDate().toISOString() || new Date().toISOString(),
         timeline: timeline,
