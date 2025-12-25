@@ -63,6 +63,28 @@ export async function incrementScanCount(campaignSourceId: string) {
     }
 }
 
+export async function incrementLeadCount(campaignSourceId: string) {
+    try {
+        const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
+        const sourceIndex = campaignSources.findIndex(cs => cs.id === campaignSourceId);
+
+        if (sourceIndex > -1) {
+            campaignSources[sourceIndex].leads += 1;
+            await writeData('campaignSources.json', campaignSources);
+            
+            // Revalidate the campaign details page to show the updated count
+            const campaignId = campaignSources[sourceIndex].campaignId;
+            revalidatePath(`/admin/campaigns/${campaignId}`);
+
+            return { success: true };
+        }
+        return { success: false, message: "Campaign source not found." };
+    } catch (error) {
+        console.error("Failed to increment lead count:", error);
+        return { success: false, message: 'Failed to increment lead count.' };
+    }
+}
+
 
 // --- Campaign Actions ---
 
