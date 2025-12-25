@@ -21,8 +21,6 @@ import Logo from '@/components/logo';
 import { useSearchParams } from 'next/navigation';
 import { clientCreateLead } from '@/lib/clientCreateLead';
 import { getLeadCreationContext } from '@/lib/actions';
-import { serverTimestamp } from 'firebase/firestore';
-
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -74,14 +72,7 @@ export default function CampaignLeadCapturePage({ params }: { params: Promise<{ 
           ...values,
           campaignId: campaignId,
           sourceId: sourceId,
-          placeId: context.placeId,
-          branchId: context.branchId,
-          category: context.category,
-          status: 'pending',
-          createdAt: serverTimestamp(),
-          timeline: [
-              { event: "FORM_SUBMITTED", timestamp: new Date(), source: "customer" },
-          ],
+          ...context,
       };
 
       console.log("Submitting lead...", leadData);

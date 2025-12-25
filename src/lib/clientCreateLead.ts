@@ -1,6 +1,6 @@
 "use client";
 
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/firebase/firebase";
 
 export async function clientCreateLead(leadData: any) {
@@ -8,6 +8,13 @@ export async function clientCreateLead(leadData: any) {
     throw new Error("Firestore DB not initialized");
   }
 
-  // The leadData should already contain the serverTimestamp() fields
-  return await addDoc(collection(db, "leads"), leadData);
+  // The leadData already contains the necessary fields from the context action
+  return addDoc(collection(db, "leads"), {
+    ...leadData,
+    status: 'pending',
+    createdAt: serverTimestamp(),
+    timeline: [
+        { event: "FORM_SUBMITTED", timestamp: new Date(), source: "customer" },
+    ],
+  });
 }

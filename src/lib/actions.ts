@@ -44,6 +44,26 @@ async function writeData(filename: string, data: any): Promise<void> {
   }
 }
 
+export async function incrementScanCount(campaignSourceId: string) {
+    try {
+        const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
+        const sourceIndex = campaignSources.findIndex(cs => cs.id === campaignSourceId);
+
+        if (sourceIndex > -1) {
+            campaignSources[sourceIndex].scans += 1;
+            await writeData('campaignSources.json', campaignSources);
+            // We don't need to revalidate paths here as it's a background update,
+            // the stats on the admin page will be fresh on next load.
+            return { success: true };
+        }
+        return { success: false, message: "Campaign source not found." };
+    } catch (error) {
+        console.error("Failed to increment scan count:", error);
+        return { success: false, message: 'Failed to increment scan count.' };
+    }
+}
+
+
 // --- Campaign Actions ---
 
 export async function createCampaign(formData: FormData) {
@@ -228,9 +248,12 @@ export async function deleteBranch(branchId: string) {
 
 export async function getLeadCreationContext(campaignId: string, sourceId: string) {
   try {
+    // --- THIS IS THE FIX: Increment scan count on page load ---
+    await incrementScanCount(sourceId);
+    // ---------------------------------------------------------
+    
     const campaign = await getCampaignById(campaignId);
     
-    // In a real app, campaignSource would be read from its own file/table
     const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
     const campaignSource = campaignSources.find(cs => cs.id === sourceId);
     
