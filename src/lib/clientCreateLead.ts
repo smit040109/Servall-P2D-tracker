@@ -10,7 +10,6 @@ export async function clientCreateLead(leadData: any) {
 
   return await addDoc(collection(db, "leads"), {
     ...leadData,
-    status: "pending",
     createdAt: serverTimestamp(),
   });
 }
