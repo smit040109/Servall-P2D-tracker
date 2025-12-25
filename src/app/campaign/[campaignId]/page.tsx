@@ -31,7 +31,7 @@ const formSchema = z.object({
 });
 
 // This page will be available at /campaign/[campaignId]
-export default function CampaignLeadCapturePage({ params }: { params: { campaignId: string } }) {
+export default function CampaignLeadCapturePage({ params }: { params: Promise<{ campaignId: string }> }) {
   const resolvedParams = use(params);
   const campaignId = resolvedParams.campaignId;
   const searchParams = useSearchParams();
@@ -76,6 +76,7 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
           placeId: context.placeId,
           branchId: context.branchId,
           category: context.category,
+          status: 'pending',
           timeline: [
               { event: "FORM_SUBMITTED", timestamp: new Date().toISOString(), source: "customer" },
           ],
