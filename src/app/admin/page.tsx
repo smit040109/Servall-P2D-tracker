@@ -5,6 +5,7 @@ import { LocationLeadsTable } from "@/components/admin/location-leads-table";
 import { PincodeLeadsTable } from "@/components/admin/pincode-leads-table";
 import { getAdminAnalytics, getCategoryLeads, getLocationLeads, getPincodeLeads } from "@/lib/data";
 import CustomerInsights from "@/components/admin/customer-insights";
+import FirestoreTest from "@/components/admin/FirestoreTest";
 
 export default async function AdminDashboardPage() {
   const [analytics, categoryLeads, locationLeads, pincodeLeads] = await Promise.all([
@@ -16,6 +17,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
+      <FirestoreTest />
       <AnalyticsCards 
         totalScans={analytics.totalScans}
         totalLeads={analytics.totalLeads}
