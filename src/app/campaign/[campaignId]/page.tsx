@@ -80,7 +80,7 @@ export default function CampaignLeadCapturePage({ params }: { params: Promise<{ 
           status: 'pending',
           createdAt: serverTimestamp(),
           timeline: [
-              { event: "FORM_SUBMITTED", timestamp: serverTimestamp(), source: "customer" },
+              { event: "FORM_SUBMITTED", timestamp: new Date(), source: "customer" },
           ],
       };
 
