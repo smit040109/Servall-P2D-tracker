@@ -56,11 +56,20 @@ function convertFirestoreDocToLead(doc: DocumentData, campaignName?: string, pla
     const data = doc.data();
     
     // Convert timeline event timestamps
-    const timeline = (data.timeline || []).map((event: any) => ({
-      ...event,
-      timestamp: (event.timestamp as Timestamp)?.toDate().toISOString() || new Date().toISOString()
-    }));
-
+    const timeline = (data.timeline || []).map((event: any) => {
+      let timestampStr: string;
+      if (typeof event.timestamp === 'string') {
+        timestampStr = event.timestamp;
+      } else if (event.timestamp && typeof event.timestamp.toDate === 'function') {
+        timestampStr = (event.timestamp as Timestamp).toDate().toISOString();
+      } else {
+        timestampStr = new Date().toISOString();
+      }
+      return {
+        ...event,
+        timestamp: timestampStr
+      };
+    });
 
     return {
         id: doc.id,

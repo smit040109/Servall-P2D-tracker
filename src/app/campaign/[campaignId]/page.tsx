@@ -21,6 +21,7 @@ import Logo from '@/components/logo';
 import { useSearchParams } from 'next/navigation';
 import { clientCreateLead } from '@/lib/clientCreateLead';
 import { getLeadCreationContext } from '@/lib/actions';
+import { serverTimestamp } from 'firebase/firestore';
 
 
 const formSchema = z.object({
@@ -77,14 +78,15 @@ export default function CampaignLeadCapturePage({ params }: { params: Promise<{ 
           branchId: context.branchId,
           category: context.category,
           status: 'pending',
+          createdAt: serverTimestamp(),
           timeline: [
-              { event: "FORM_SUBMITTED", timestamp: new Date().toISOString(), source: "customer" },
+              { event: "FORM_SUBMITTED", timestamp: serverTimestamp(), source: "customer" },
           ],
       };
 
       console.log("Submitting lead...", leadData);
-      const docRef = await clientCreateLead(leadData);
-      console.log("Lead created:", docRef.id);
+      await clientCreateLead(leadData);
+      console.log("Lead saved");
       
       toast({
           title: 'Success!',

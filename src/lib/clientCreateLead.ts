@@ -1,6 +1,6 @@
 "use client";
 
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection } from "firebase/firestore";
 import { db } from "@/firebase/firebase";
 
 export async function clientCreateLead(leadData: any) {
@@ -8,8 +8,6 @@ export async function clientCreateLead(leadData: any) {
     throw new Error("Firestore DB not initialized");
   }
 
-  return addDoc(collection(db, "leads"), {
-    ...leadData,
-    createdAt: serverTimestamp(),
-  });
+  // The leadData should already contain the serverTimestamp() fields
+  return await addDoc(collection(db, "leads"), leadData);
 }
