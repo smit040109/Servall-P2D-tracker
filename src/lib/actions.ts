@@ -17,7 +17,7 @@ export async function incrementScanCount(campaignSourceId: string) {
         console.log(`(Stub) Incrementing scan count for ${campaignSourceId}`);
         // In a real DB, you would increment the count here.
         // For now, we do nothing but revalidate.
-        const campaignSources = await getCampaignSourcesData(campaignSourceId);
+        const campaignSources = await getCampaignSourcesData('');
         const source = campaignSources.find(cs => cs.id === campaignSourceId);
         if (source) {
             revalidatePath(`/admin/campaigns/${source.campaignId}`);
