@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -82,6 +81,7 @@ export default function CampaignLeadCapturePage({ params }: { params: { campaign
           ],
       };
 
+      console.log("Submitting lead...", leadData);
       const docRef = await clientCreateLead(leadData);
       console.log("Lead created:", docRef.id);
       
