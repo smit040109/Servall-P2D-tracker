@@ -10,8 +10,8 @@ import discountsData from './data/default-discounts.json';
 import franchisesData from './data/default-franchises.json';
 import placesData from './data/default-places.json';
 
-// In a real application, you would manage state changes, but for this mock implementation,
-// we will just serve the default data.
+// The data is now held in-memory and is not mutable via file writes.
+// All functions will return this static, default data.
 let campaigns: Campaign[] = campaignsData;
 let campaignSources: CampaignSource[] = campaignSourcesData;
 let discounts: Discount[] = discountsData;
@@ -39,7 +39,10 @@ function convertFirestoreDocToLead(doc: DocumentData, campaignName?: string, pla
         timestampStr = event.timestamp;
       } else if (event.timestamp && typeof event.timestamp.toDate === 'function') {
         timestampStr = (event.timestamp as Timestamp).toDate().toISOString();
-      } else {
+      } else if (event.timestamp instanceof Date) {
+        timestampStr = event.timestamp.toISOString();
+      }
+      else {
         timestampStr = new Date().toISOString();
       }
       return {

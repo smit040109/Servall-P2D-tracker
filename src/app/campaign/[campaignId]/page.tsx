@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Car, Loader2 } from 'lucide-react';
-import React, { use } from 'react';
+import React, { useEffect, useState } from 'react';
 import Logo from '@/components/logo';
 import { useSearchParams } from 'next/navigation';
 import { clientCreateLead } from '@/lib/clientCreateLead';
@@ -30,14 +31,16 @@ const formSchema = z.object({
 });
 
 // This page will be available at /campaign/[campaignId]
-export default function CampaignLeadCapturePage({ params }: { params: Promise<{ campaignId: string }> }) {
-  const resolvedParams = use(params);
-  const campaignId = resolvedParams.campaignId;
+export default function CampaignLeadCapturePage({ params }: { params: { campaignId: string } }) {
+  const campaignId = params.campaignId;
   const searchParams = useSearchParams();
   const sourceId = searchParams.get('sourceId');
   const { toast } = useToast();
   
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [leadContext, setLeadContext] = useState<any>(null);
+  const [contextError, setContextError] = useState<string | null>(null);
+  const [isLoadingContext, setIsLoadingContext] = useState(true);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -48,6 +51,29 @@ export default function CampaignLeadCapturePage({ params }: { params: Promise<{ 
       pincode: '',
     },
   });
+  
+  useEffect(() => {
+    async function fetchContext() {
+      if (!sourceId || !campaignId) {
+        setContextError("Missing tracking information from QR code.");
+        setIsLoadingContext(false);
+        return;
+      }
+      try {
+        const context = await getLeadCreationContext(campaignId, sourceId);
+        if (!context.success) {
+          throw new Error(context.error);
+        }
+        setLeadContext(context);
+      } catch (error: any) {
+        setContextError(error.message || "Could not validate campaign details.");
+      } finally {
+        setIsLoadingContext(false);
+      }
+    }
+    fetchContext();
+  }, [campaignId, sourceId]);
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!sourceId) {
@@ -62,17 +88,19 @@ export default function CampaignLeadCapturePage({ params }: { params: Promise<{ 
     setIsSubmitting(true);
     
     try {
-      // Fetch server-side context using the server action
-      const context = await getLeadCreationContext(campaignId, sourceId);
-      if (!context.success) {
-        throw new Error(context.error);
+      if (!leadContext) {
+        throw new Error("Lead creation context is not available.");
       }
       
       const leadData = {
           ...values,
           campaignId: campaignId,
           sourceId: sourceId,
-          ...context,
+          ...leadContext,
+          // Timeline with client-side timestamp
+          timeline: [
+              { event: "FORM_SUBMITTED", timestamp: new Date(), source: "customer" },
+          ],
       };
 
       console.log("Submitting lead...", leadData);
@@ -96,7 +124,26 @@ export default function CampaignLeadCapturePage({ params }: { params: Promise<{ 
     }
   }
 
-  if (!sourceId) {
+  if (isLoadingContext) {
+     return (
+           <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+              <div className="absolute top-8 left-8">
+                <Logo />
+              </div>
+              <Card className="w-full max-w-md shadow-2xl">
+                <CardHeader className="text-center">
+                   <div className="flex justify-center items-center p-8">
+                    <Loader2 className="animate-spin text-primary" size={32} />
+                  </div>
+                  <CardTitle>Loading...</CardTitle>
+                  <CardDescription>Validating QR Code...</CardDescription>
+                </CardHeader>
+              </Card>
+           </main>
+      )
+  }
+
+  if (contextError) {
       return (
            <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
               <div className="absolute top-8 left-8">
@@ -105,7 +152,7 @@ export default function CampaignLeadCapturePage({ params }: { params: Promise<{ 
               <Card className="w-full max-w-md shadow-2xl">
                 <CardHeader className="text-center">
                   <CardTitle>Error</CardTitle>
-                  <CardDescription>Missing tracking information from QR code. Please scan the QR code again.</CardDescription>
+                  <CardDescription>{contextError}</CardDescription>
                 </CardHeader>
               </Card>
            </main>

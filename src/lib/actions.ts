@@ -2,21 +2,20 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { Campaign, Place, CampaignSource, Discount, Franchise, Lead, TimelineEvent, Customer } from './types';
+import type { Lead, TimelineEvent, Customer } from './types';
 import { db } from '@/firebase/firebase';
 import { addDoc, collection, serverTimestamp, updateDoc, doc, arrayUnion, query, where, getDocs, writeBatch } from 'firebase/firestore';
-import { format } from 'date-fns';
 import { getCampaignById, getPlaces, getCampaignSources as getCampaignSourcesData } from './data';
 
-// Since we are no longer using fs, the read/write helpers are removed.
 // All actions that mutated JSON files are now stubbed to simply return success.
-// The data will appear to change because of `revalidatePath`, but changes are not persisted.
+// The data will appear to change on the client because of `revalidatePath`, but changes are not persisted in memory or on disk.
+// This is to fix Vercel build errors by removing 'fs' and 'path' dependencies.
 
 export async function incrementScanCount(campaignSourceId: string) {
     try {
         console.log(`(Stub) Incrementing scan count for ${campaignSourceId}`);
-        // In a real DB, you would increment the count here.
-        // For now, we do nothing but revalidate.
+        // In a real DB, you would increment a value. For this stub, we revalidate paths to trigger UI updates.
+        // The underlying mock data is not changed.
         const campaignSources = await getCampaignSourcesData('');
         const source = campaignSources.find(cs => cs.id === campaignSourceId);
         if (source) {
@@ -33,12 +32,15 @@ export async function incrementScanCount(campaignSourceId: string) {
 export async function incrementLeadCount(campaignSourceId: string) {
     try {
         console.log(`(Stub) Incrementing lead count for ${campaignSourceId}`);
-        // In a real DB, you would increment the count here.
+        // The UI will show updated data because `getAllLeads` reads from Firestore,
+        // and this revalidation will trigger a refetch.
         const campaignSources = await getCampaignSourcesData('');
         const source = campaignSources.find(cs => cs.id === campaignSourceId);
         if (source) {
           revalidatePath(`/admin/campaigns/${source.campaignId}`);
         }
+        revalidatePath('/admin');
+        revalidatePath('/admin/places');
         return { success: true };
     } catch (error) {
         console.error("Failed to increment lead count (stub):", error);
@@ -119,8 +121,8 @@ export async function deleteBranch(branchId: string) {
 
 export async function getLeadCreationContext(campaignId: string, sourceId: string) {
   try {
-    // We can no longer increment scan count here as it was writing to a file.
-    // await incrementScanCount(sourceId);
+    // Increment the scan count for the specific QR code that was scanned.
+    await incrementScanCount(sourceId);
     
     const campaign = await getCampaignById(campaignId);
     const places = await getPlaces();

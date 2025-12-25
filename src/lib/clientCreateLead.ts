@@ -1,3 +1,4 @@
+
 "use client";
 
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
@@ -10,13 +11,11 @@ export async function clientCreateLead(leadData: any) {
   }
 
   // The leadData already contains the necessary fields from the context action
+  // The timeline is also now passed in from the client component
   const docRef = await addDoc(collection(db, "leads"), {
     ...leadData,
     status: 'pending',
     createdAt: serverTimestamp(),
-    timeline: [
-        { event: "FORM_SUBMITTED", timestamp: new Date(), source: "customer" },
-    ],
   });
 
   // After successful lead creation, update the JSON-based lead count
