@@ -1,86 +1,47 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { promises as fs } from 'fs';
-import path from 'path';
 import type { Campaign, Place, CampaignSource, Discount, Franchise, Lead, TimelineEvent, Customer } from './types';
 import { db } from '@/firebase/firebase';
 import { addDoc, collection, serverTimestamp, updateDoc, doc, arrayUnion, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { format } from 'date-fns';
-import { z } from 'zod';
-import { getCampaignById, getPlaces } from './data';
+import { getCampaignById, getPlaces, getCampaignSources as getCampaignSourcesData } from './data';
 
-// Helper function to read data from JSON files
-async function readData<T>(filename: string): Promise<T> {
-  const filePath = path.join(process.cwd(), 'src', 'lib', 'data', filename);
-  try {
-    const fileContent = await fs.readFile(filePath, 'utf-8');
-    return JSON.parse(fileContent);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      const defaultDataPath = path.join(process.cwd(), 'src', 'lib', 'data', `default-${filename}`);
-      try {
-          const defaultFileContent = await fs.readFile(defaultDataPath, 'utf-8');
-          await fs.writeFile(filePath, defaultFileContent, 'utf-8');
-          return JSON.parse(defaultFileContent);
-      } catch (readError) {
-          console.error(`Error reading default data for ${filename}:`, readError);
-          return [] as T;
-      }
-    }
-    console.error(`Error reading ${filename}:`, error);
-    // Return empty array or object if file doesn't exist or is empty
-    return [] as T;
-  }
-}
-
-// Helper function to write data to JSON files
-async function writeData(filename: string, data: any): Promise<void> {
-  const filePath = path.join(process.cwd(), 'src', 'lib', 'data', filename);
-  try {
-    await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (error) {
-    console.error(`Error writing to ${filename}:`, error);
-  }
-}
+// Since we are no longer using fs, the read/write helpers are removed.
+// All actions that mutated JSON files are now stubbed to simply return success.
+// The data will appear to change because of `revalidatePath`, but changes are not persisted.
 
 export async function incrementScanCount(campaignSourceId: string) {
     try {
-        const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
-        const sourceIndex = campaignSources.findIndex(cs => cs.id === campaignSourceId);
-
-        if (sourceIndex > -1) {
-            campaignSources[sourceIndex].scans += 1;
-            await writeData('campaignSources.json', campaignSources);
-            // We don't need to revalidate paths here as it's a background update,
-            // the stats on the admin page will be fresh on next load.
-            return { success: true };
+        console.log(`(Stub) Incrementing scan count for ${campaignSourceId}`);
+        // In a real DB, you would increment the count here.
+        // For now, we do nothing but revalidate.
+        const campaignSources = await getCampaignSourcesData(campaignSourceId);
+        const source = campaignSources.find(cs => cs.id === campaignSourceId);
+        if (source) {
+            revalidatePath(`/admin/campaigns/${source.campaignId}`);
         }
-        return { success: false, message: "Campaign source not found." };
+        revalidatePath('/admin/places');
+        return { success: true };
     } catch (error) {
-        console.error("Failed to increment scan count:", error);
+        console.error("Failed to increment scan count (stub):", error);
         return { success: false, message: 'Failed to increment scan count.' };
     }
 }
 
 export async function incrementLeadCount(campaignSourceId: string) {
     try {
-        const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
-        const sourceIndex = campaignSources.findIndex(cs => cs.id === campaignSourceId);
-
-        if (sourceIndex > -1) {
-            campaignSources[sourceIndex].leads += 1;
-            await writeData('campaignSources.json', campaignSources);
-            
-            // Revalidate the campaign details page to show the updated count
-            const campaignId = campaignSources[sourceIndex].campaignId;
-            revalidatePath(`/admin/campaigns/${campaignId}`);
-
-            return { success: true };
+        console.log(`(Stub) Incrementing lead count for ${campaignSourceId}`);
+        // In a real DB, you would increment the count here.
+        const campaignSources = await getCampaignSourcesData('');
+        const source = campaignSources.find(cs => cs.id === campaignSourceId);
+        if (source) {
+          revalidatePath(`/admin/campaigns/${source.campaignId}`);
         }
-        return { success: false, message: "Campaign source not found." };
+        return { success: true };
     } catch (error) {
-        console.error("Failed to increment lead count:", error);
+        console.error("Failed to increment lead count (stub):", error);
         return { success: false, message: 'Failed to increment lead count.' };
     }
 }
@@ -89,180 +50,68 @@ export async function incrementLeadCount(campaignSourceId: string) {
 // --- Campaign Actions ---
 
 export async function createCampaign(formData: FormData) {
-  try {
-    const campaigns = await readData<Campaign[]>('campaigns.json');
-    const newCampaign: Campaign = {
-      id: `cam_${Date.now()}`,
-      name: formData.get('name') as string,
-      city: formData.get('city') as string,
-      branchId: formData.get('branchId') as string,
-      discountId: formData.get('discountId') as string,
-      startDate: formData.get('startDate') as string,
-      endDate: formData.get('endDate') as string,
-      status: 'active',
-      createdAt: new Date().toISOString(),
-    };
-    campaigns.push(newCampaign);
-    await writeData('campaigns.json', campaigns);
+    console.log("(Stub) Creating campaign with data:", Object.fromEntries(formData.entries()));
     revalidatePath('/admin/campaigns');
-    return { success: true, message: 'Campaign created successfully.' };
-  } catch (error) {
-    console.error(error);
-    return { success: false, message: 'Failed to create campaign.' };
-  }
+    return { success: true, message: 'Campaign created successfully (mock).' };
 }
 
 export async function deleteCampaign(campaignId: string) {
-  try {
-    let campaigns = await readData<Campaign[]>('campaigns.json');
-    campaigns = campaigns.filter((c) => c.id !== campaignId);
-    await writeData('campaigns.json', campaigns);
-    
-    // Also delete associated campaign sources
-    let campaignSources = await readData<CampaignSource[]>('campaignSources.json');
-    campaignSources = campaignSources.filter(cs => cs.campaignId !== campaignId);
-    await writeData('campaignSources.json', campaignSources);
-
+    console.log(`(Stub) Deleting campaign ${campaignId}`);
     revalidatePath('/admin/campaigns');
     revalidatePath(`/admin/campaigns/${campaignId}`);
-    return { success: true, message: 'Campaign deleted successfully.' };
-  } catch (error) {
-    return { success: false, message: 'Failed to delete campaign.' };
-  }
+    return { success: true, message: 'Campaign deleted successfully (mock).' };
 }
 
 
 // --- Place Actions ---
 
 export async function createPlace(formData: FormData) {
-  try {
-    const places = await readData<Place[]>('places.json');
-    const newPlace: Place = {
-      id: `place_${Date.now()}`,
-      name: formData.get('name') as string,
-      category: formData.get('category') as string,
-      monthlyCost: Number(formData.get('monthlyCost')),
-      placementType: formData.get('placementType') as Place['placementType'],
-      startDate: format(new Date(formData.get('startDate') as string), 'yyyy-MM-dd'),
-      endDate: format(new Date(formData.get('endDate') as string), 'yyyy-MM-dd'),
-    };
-    places.push(newPlace);
-    await writeData('places.json', places);
+    console.log("(Stub) Creating place with data:", Object.fromEntries(formData.entries()));
     revalidatePath('/admin/places');
-    return { success: true, message: 'Place created successfully.' };
-  } catch (error) {
-    console.error(error);
-    return { success: false, message: 'Failed to create place.' };
-  }
+    return { success: true, message: 'Place created successfully (mock).' };
 }
 
 export async function deletePlace(placeId: string) {
-    try {
-        let places = await readData<Place[]>('places.json');
-        places = places.filter((p) => p.id !== placeId);
-        await writeData('places.json', places);
-        revalidatePath('/admin/places');
-        return { success: true, message: 'Place deleted successfully.' };
-    } catch (error) {
-        return { success: false, message: 'Failed to delete place.' };
-    }
+    console.log(`(Stub) Deleting place ${placeId}`);
+    revalidatePath('/admin/places');
+    return { success: true, message: 'Place deleted successfully (mock).' };
 }
 
 
 // --- Campaign Source Actions ---
 
 export async function addSourceToCampaign(formData: FormData) {
-    try {
-        const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
-        const campaignId = formData.get('campaignId') as string;
-        const sourceId = formData.get('sourceId') as string;
-
-        // Create a new campaign source document. This ensures it's always an "add" operation.
-        const newSource: CampaignSource = {
-            id: `cs_${Date.now()}`, // Unique ID for this specific campaign-place instance
-            campaignId: campaignId,
-            sourceId: sourceId, // The ID of the master "Place"
-            scans: 0,
-            leads: 0,
-            encashed: 0,
-        };
-
-        campaignSources.push(newSource);
-        await writeData('campaignSources.json', campaignSources);
-        revalidatePath(`/admin/campaigns/${campaignId}`);
-        return { success: true, message: 'Source added to campaign successfully.' };
-
-    } catch (error) {
-        console.error("Error adding source to campaign:", error);
-        return { success: false, message: 'Failed to add source to campaign.' };
-    }
+    const campaignId = formData.get('campaignId') as string;
+    console.log(`(Stub) Adding source to campaign ${campaignId}`);
+    revalidatePath(`/admin/campaigns/${campaignId}`);
+    return { success: true, message: 'Source added to campaign successfully (mock).' };
 }
 
 
 export async function deleteCampaignSource(campaignSourceId: string, campaignId: string) {
-    try {
-        let campaignSources = await readData<CampaignSource[]>('campaignSources.json');
-        campaignSources = campaignSources.filter((cs) => cs.id !== campaignSourceId);
-        await writeData('campaignSources.json', campaignSources);
-        revalidatePath(`/admin/campaigns/${campaignId}`);
-        return { success: true, message: 'Campaign source deleted successfully.' };
-    } catch (error) {
-        return { success: false, message: 'Failed to delete campaign source.' };
-    }
+    console.log(`(Stub) Deleting campaign source ${campaignSourceId}`);
+    revalidatePath(`/admin/campaigns/${campaignId}`);
+    return { success: true, message: 'Campaign source deleted successfully (mock).' };
 }
 
 // --- Discount Actions ---
 export async function createDiscount(formData: FormData) {
-  try {
-    const discounts = await readData<Discount[]>('discounts.json');
-    const newDiscount: Discount = {
-      id: `disc_${Date.now()}`,
-      code: formData.get('code') as string,
-      description: formData.get('description') as string,
-      type: formData.get('type') as 'percentage' | 'fixed',
-      value: Number(formData.get('value')),
-      status: 'active' // Default status
-    };
-    discounts.push(newDiscount);
-    await writeData('discounts.json', discounts);
+    console.log("(Stub) Creating discount:", Object.fromEntries(formData.entries()));
     revalidatePath('/admin/discounts');
-    return { success: true, message: 'Discount created successfully.' };
-  } catch (error) {
-    return { success: false, message: 'Failed to create discount.' };
-  }
+    return { success: true, message: 'Discount created successfully (mock).' };
 }
 
 // --- Branch Actions ---
 export async function createBranch(formData: FormData) {
-  try {
-    const branches = await readData<Franchise[]>('franchises.json');
-    const newBranch: Franchise = {
-      id: `fran_${Date.now()}`,
-      name: formData.get('name') as string,
-      totalScans: 0,
-      totalLeads: 0,
-      successfullyEncashed: 0
-    };
-    branches.push(newBranch);
-    await writeData('franchises.json', branches);
+    console.log("(Stub) Creating branch:", Object.fromEntries(formData.entries()));
     revalidatePath('/admin/branches');
-    return { success: true, message: 'Branch created successfully.' };
-  } catch (error)
- {
-    return { success: false, message: 'Failed to create branch.' };
-  }
+    return { success: true, message: 'Branch created successfully (mock).' };
 }
 
 export async function deleteBranch(branchId: string) {
-    try {
-        let branches = await readData<Franchise[]>('franchises.json');
-        branches = branches.filter((b) => b.id !== branchId);
-        await writeData('franchises.json', branches);
-        revalidatePath('/admin/branches');
-        return { success: true, message: 'Branch deleted successfully.' };
-    } catch (error) {
-        return { success: false, message: 'Failed to delete branch.' };
-    }
+    console.log(`(Stub) Deleting branch ${branchId}`);
+    revalidatePath('/admin/branches');
+    return { success: true, message: 'Branch deleted successfully (mock).' };
 }
 
 
@@ -270,20 +119,18 @@ export async function deleteBranch(branchId: string) {
 
 export async function getLeadCreationContext(campaignId: string, sourceId: string) {
   try {
-    // --- THIS IS THE FIX: Increment scan count on page load ---
-    await incrementScanCount(sourceId);
-    // ---------------------------------------------------------
+    // We can no longer increment scan count here as it was writing to a file.
+    // await incrementScanCount(sourceId);
     
     const campaign = await getCampaignById(campaignId);
-    
-    const campaignSources = await readData<CampaignSource[]>('campaignSources.json');
+    const places = await getPlaces();
+    const campaignSources = await getCampaignSourcesData('');
     const campaignSource = campaignSources.find(cs => cs.id === sourceId);
     
     if (!campaignSource) {
       throw new Error('Campaign source not found');
     }
     
-    const places = await getPlaces();
     const place = places.find(p => p.id === campaignSource.sourceId);
 
     if (!campaign || !place) {
@@ -375,7 +222,3 @@ export async function updateLeadStatus(
     return { success: false, message: 'Failed to update lead.' };
   }
 }
-
-
-
-    

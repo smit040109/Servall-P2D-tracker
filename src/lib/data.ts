@@ -1,54 +1,31 @@
 
 import type { Campaign, Lead, Franchise, AnalyticsData, Discount, Place, CampaignSource, CategoryLead, LocationLead, PlaceWithStats, TimelineEvent, Customer, PincodeLead } from './types';
-import { promises as fs } from 'fs';
-import path from 'path';
 import { db } from '@/firebase/firebase';
 import { collection, query, where, getDocs, Timestamp, DocumentData, orderBy } from 'firebase/firestore';
 
+// In-memory data stores, initialized from default JSON files
+import campaignsData from './data/default-campaigns.json';
+import campaignSourcesData from './data/default-campaignSources.json';
+import discountsData from './data/default-discounts.json';
+import franchisesData from './data/default-franchises.json';
+import placesData from './data/default-places.json';
 
-// Helper function to read data from JSON files
-async function readData<T>(filename: string): Promise<T> {
-  const filePath = path.join(process.cwd(), 'src', 'lib', 'data', filename);
-  try {
-    const fileContent = await fs.readFile(filePath, 'utf-8');
-    // If the file is empty, return the default empty state for that type
-    if (fileContent.trim() === '') {
-        const defaultDataPath = path.join(process.cwd(), 'src', 'lib', 'data', `default-${filename}`);
-        const defaultFileContent = await fs.readFile(defaultDataPath, 'utf-8');
-        return JSON.parse(defaultFileContent);
-    }
-    return JSON.parse(fileContent);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        // If the file doesn't exist, create it with default data
-        const defaultDataPath = path.join(process.cwd(), 'src', 'lib', 'data', `default-${filename}`);
-        try {
-            const defaultFileContent = await fs.readFile(defaultDataPath, 'utf-8');
-            await fs.writeFile(filePath, defaultFileContent, 'utf-8');
-            return JSON.parse(defaultFileContent);
-        } catch (readError) {
-            console.error(`Error reading default data for ${filename}:`, readError);
-            return [] as T;
-        }
-    }
-    console.error(`Error reading ${filename}:`, error);
-    return [] as T;
-  }
-}
-
-async function writeData(filename: string, data: any): Promise<void> {
-  const filePath = path.join(process.cwd(), 'src', 'lib', 'data', filename);
-  await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
-}
+// In a real application, you would manage state changes, but for this mock implementation,
+// we will just serve the default data.
+let campaigns: Campaign[] = campaignsData;
+let campaignSources: CampaignSource[] = campaignSourcesData;
+let discounts: Discount[] = discountsData;
+let franchises: Franchise[] = franchisesData;
+let places: Place[] = placesData;
 
 
 export async function getCampaigns(): Promise<Campaign[]> {
-  return await readData<Campaign[]>('campaigns.json');
+  return campaigns;
 }
 
 export async function getCampaignById(campaignId: string): Promise<Campaign | undefined> {
-    const campaigns = await getCampaigns();
-    return campaigns.find(c => c.id === campaignId);
+    const allCampaigns = await getCampaigns();
+    return allCampaigns.find(c => c.id === campaignId);
 }
 
 // Helper to convert Firestore document to a Lead object, handling Timestamps.
@@ -114,11 +91,9 @@ export async function getLeadByPhone(phone: string): Promise<Lead | undefined> {
     // Fetch campaign and place names
     const campaign = await getCampaignById(leadData.campaignId);
     
-    const [places] = await Promise.all([
-        readData<Place[]>('places.json'),
-    ]);
+    const allPlaces = await getPlaces();
 
-    const place = places.find(p => p.id === leadData.placeId);
+    const place = allPlaces.find(p => p.id === leadData.placeId);
     
     return convertFirestoreDocToLead(leadDoc, campaign?.name, place?.name);
 }
@@ -129,13 +104,11 @@ export async function getAllLeads(): Promise<Lead[]> {
         console.warn("Firestore is not initialized. Cannot fetch all leads.");
         return [];
     }
-    const [campaigns, places] = await Promise.all([
-      getCampaigns(),
-      getPlaces()
-    ]);
+    const allCampaigns = await getCampaigns();
+    const allPlaces = await getPlaces();
     
-    const campaignMap = new Map(campaigns.map(c => [c.id, c.name]));
-    const placeMap = new Map(places.map(p => [p.id, p.name]));
+    const campaignMap = new Map(allCampaigns.map(c => [c.id, c.name]));
+    const placeMap = new Map(allPlaces.map(p => [p.id, p.name]));
 
     const leadsRef = collection(db, 'leads');
     const q = query(leadsRef, orderBy("createdAt", "desc"));
@@ -160,13 +133,13 @@ async function getAllCustomers(): Promise<Customer[]> {
 
 
 export async function getAdminAnalytics(): Promise<AnalyticsData> {
-    const [campaignSources, leads, customers] = await Promise.all([
-        readData<CampaignSource[]>('campaignSources.json'),
+    const [allCampaignSources, leads, customers] = await Promise.all([
+        getCampaignSources(''), // Pass empty string to get all sources
         getAllLeads(),
         getAllCustomers(),
     ]);
     
-    const totalScans = campaignSources.reduce((sum, s) => sum + s.scans, 0);
+    const totalScans = allCampaignSources.reduce((sum, s) => sum + s.scans, 0);
     const totalLeads = leads.length;
     const successfullyEncashed = leads.filter(l => l.status === 'encashed').length;
 
@@ -210,13 +183,11 @@ export async function getCategoryLeads(): Promise<CategoryLead[]> {
 
 export async function getLocationLeads(): Promise<LocationLead[]> {
     const leads = await getAllLeads(); // Reading from Firestore
-    const [places] = await Promise.all([
-        readData<Place[]>('places.json'),
-    ]);
+    const allPlaces = await getPlaces();
     const locationCounts: Record<string, { leads: number, category: string, name: string }> = {};
 
     leads.forEach(lead => {
-        const place = places.find(p => p.id === lead.placeId);
+        const place = allPlaces.find(p => p.id === lead.placeId);
         if (place) {
             const locationKey = place.id;
             if (!locationCounts[locationKey]) {
@@ -240,9 +211,10 @@ export async function getPincodeLeads(): Promise<PincodeLead[]> {
 }
 
 export async function getBranchAnalytics(branchId: string): Promise<AnalyticsData> {
-    const campaigns = (await getCampaigns()).filter(c => c.branchId === branchId);
+    const allCampaigns = await getCampaigns();
+    const campaigns = allCampaigns.filter(c => c.branchId === branchId);
     const campaignIds = campaigns.map(c => c.id);
-    const allCampaignSources = await readData<CampaignSource[]>('campaignSources.json');
+    const allCampaignSources = await getCampaignSources(''); // Get all
     const branchCampaignSources = allCampaignSources.filter(cs => campaignIds.includes(cs.campaignId));
     
     const totalScans = branchCampaignSources.reduce((sum, cs) => sum + cs.scans, 0);
@@ -274,19 +246,19 @@ export async function getBranchAnalytics(branchId: string): Promise<AnalyticsDat
 }
 
 export async function getFranchises(): Promise<Franchise[]> {
-    return await readData<Franchise[]>('franchises.json');
+    return franchises;
 }
 
 export async function getDiscounts(): Promise<Discount[]> {
-    return await readData<Discount[]>('discounts.json');
+    return discounts;
 }
 
 export async function getPlaces(): Promise<Place[]> {
-    return await readData<Place[]>('places.json');
+    return places;
 }
 
 export async function getPlacesWithStats(): Promise<PlaceWithStats[]> {
-    const [places, leads] = await Promise.all([
+    const [allPlaces, leads] = await Promise.all([
         getPlaces(),
         getAllLeads()
     ]);
@@ -297,7 +269,7 @@ export async function getPlacesWithStats(): Promise<PlaceWithStats[]> {
     const placeStats = new Map<string, { totalLeads: number; totalEncashed: number }>();
 
     // Initialize stats for each place
-    for (const place of places) {
+    for (const place of allPlaces) {
         placeStats.set(place.id, { totalLeads: 0, totalEncashed: 0 });
     }
     
@@ -314,7 +286,7 @@ export async function getPlacesWithStats(): Promise<PlaceWithStats[]> {
     }
     
     // Combine places with their stats and calculate ROI metrics
-    const placesWithStats = places.map(place => {
+    const placesWithStats = allPlaces.map(place => {
         const stats = placeStats.get(place.id) || { totalLeads: 0, totalEncashed: 0 };
         const costPerLead = stats.totalLeads > 0 ? place.monthlyCost / stats.totalLeads : 0;
         const costPerEncashment = stats.totalEncashed > 0 ? place.monthlyCost / stats.totalEncashed : 0;
@@ -334,7 +306,8 @@ export async function getPlacesWithStats(): Promise<PlaceWithStats[]> {
 }
 
 export async function getCampaignSources(campaignId: string): Promise<CampaignSource[]> {
-    const sources = await readData<CampaignSource[]>('campaignSources.json');
+    const sources = campaignSources;
+    if (!campaignId) return sources;
     return sources.filter(cs => cs.campaignId === campaignId);
 }
 
